@@ -1,0 +1,278 @@
+<mod id="m16" day="2" time="150 minutes" title="More DSA problems with solutions">
+<p>These are the problems that show up most often in campus coding rounds, grouped by topic. Each has a difficulty tag. Work in order within a topic, and use the 20-minute rule. If you are short on time, do the <span class="badge">Priority</span> ones first, since they cover the most common patterns.</p>
+
+<h3>Which technique for which problem?</h3>
+<p>The hardest part of a new problem is choosing the approach. Use the wording of the problem as a clue:</p>
+<table>
+<tr><th>If the problem says...</th><th>Think about...</th></tr>
+<tr><td>find a pair, a complement, a duplicate, or count occurrences</td><td>Hashmap or set</td></tr>
+<tr><td>sorted array, or "find the position"</td><td>Binary search, or two pointers</td></tr>
+<tr><td>contiguous subarray or substring</td><td>Sliding window, or prefix sums</td></tr>
+<tr><td>do it in place, or remove or move items</td><td>Two pointers (a read pointer and a write pointer)</td></tr>
+<tr><td>next greater element, matching brackets, nested structure</td><td>Stack</td></tr>
+<tr><td>middle, cycle, or n-th from the end of a linked list</td><td>Fast and slow pointers</td></tr>
+<tr><td>top k, k-th largest or smallest</td><td>Heap</td></tr>
+<tr><td>level by level, or shortest path with equal costs</td><td>BFS (queue)</td></tr>
+<tr><td>explore everything, or connected regions</td><td>DFS (recursion or stack)</td></tr>
+<tr><td>count the ways, or best result from a series of choices, with repeated sub-questions</td><td>Dynamic programming</td></tr>
+</table>
+
+<h3>Arrays</h3>
+
+<try id="dsa-dups" title="Remove duplicates from a sorted array" level="Easy" must="1">
+<p>Remove duplicates from a sorted list <b>in place</b>, so each value appears once. Return the number of unique values <code>k</code>. The first <code>k</code> slots must hold the unique values in order. Do not create a new list.</p>
+<pre class="plain">a = [1, 1, 2, 2, 2, 3]
+remove_duplicates(a)   # 3, and a[:3] is [1, 2, 3]</pre>
+<solution>
+[[py:dsa_remove_dups]]
+<p>Because the list is sorted, duplicates sit next to each other. <code>read</code> scans every element, and <code>write</code> marks the next free slot for a new unique value. A value is new if it differs from the last value written. Time O(n), space O(1).</p>
+</try>
+
+<try id="dsa-missing" title="Missing number" level="Easy" must="1">
+<p>A list holds <code>n</code> distinct numbers taken from <code>0..n</code>, so exactly one number in that range is missing. Find it.</p>
+<pre class="plain">missing_number([3, 0, 1])   # 2</pre>
+<p>Try to do it in O(n) time and O(1) space. Hint: what should the total of <code>0..n</code> be?</p>
+<solution>
+[[py:dsa_missing]]
+<p>The sum of <code>0..n</code> is <code>n(n+1)/2</code>. Subtract the actual sum and what is left is the missing number. An alternative that avoids any overflow worry in other languages is XOR (see the bits problems below). Time O(n), space O(1).</p>
+</try>
+
+<try id="dsa-majority" title="Majority element" level="Easy">
+<p>Find the value that appears more than <code>n/2</code> times in a list (it always exists). Aim for O(1) extra space.</p>
+<pre class="plain">majority_element([2, 2, 1, 1, 1, 2, 2])   # 2</pre>
+<solution>
+[[py:dsa_majority]]
+<p>This is the <b>Boyer-Moore voting</b> idea. Keep a candidate and a counter. The same value adds 1, a different value subtracts 1, and at zero you pick a new candidate. Since the majority value outnumbers all others combined, it cannot be cancelled out entirely. Time O(n), space O(1). The easy alternative is <code>Counter(nums).most_common(1)</code>, which is O(n) space. Mention both.</p>
+</try>
+
+<try id="dsa-product" title="Product of array except self" level="Medium" must="1">
+<p>Return a list where element <code>i</code> is the product of all elements <i>except</i> <code>nums[i]</code>. Do <b>not</b> use division.</p>
+<pre class="plain">product_except_self([1, 2, 3, 4])   # [24, 12, 8, 6]</pre>
+<p>Hint: the answer for position <code>i</code> is (product of everything to its left) times (product of everything to its right).</p>
+<solution>
+[[py:dsa_product]]
+<p>The first pass stores, in <code>result[i]</code>, the product of everything to the left of <code>i</code>. The second pass, going right to left, multiplies in the product of everything to the right. No division, so zeroes in the input are handled correctly. Time O(n), and O(1) extra space apart from the output list.</p>
+</try>
+
+<try id="dsa-rotate" title="Rotate an array by k" level="Medium">
+<p>Rotate a list to the right by <code>k</code> places, in place.</p>
+<pre class="plain">rotate([1, 2, 3, 4, 5, 6, 7], 3)   # [5, 6, 7, 1, 2, 3, 4]</pre>
+<solution>
+[[py:dsa_rotate]]
+<p>The neat trick is three reversals: reverse the whole list, then reverse the first <code>k</code>, then reverse the rest. Take <code>k %= n</code> first, since rotating by <code>n</code> changes nothing. Time O(n), space O(1). The one-liner <code>nums[:] = nums[-k:] + nums[:-k]</code> is also fine, but it uses O(n) extra space.</p>
+</try>
+
+<try id="dsa-colors" title="Sort colors (Dutch national flag)" level="Medium">
+<p>A list contains only <code>0</code>, <code>1</code> and <code>2</code>. Sort it in place in a single pass, without using <code>sort()</code>.</p>
+<pre class="plain">sort_colors([2, 0, 2, 1, 1, 0])   # [0, 0, 1, 1, 2, 2]</pre>
+<solution>
+[[py:dsa_colors]]
+<p>Three pointers split the list into regions: everything before <code>low</code> is 0, everything from <code>low</code> to before <code>mid</code> is 1, and everything after <code>high</code> is 2. Inspect <code>nums[mid]</code>: a 0 swaps to the front, a 1 stays, and a 2 swaps to the back. When you swap with <code>high</code>, do <b>not</b> advance <code>mid</code>, because the value swapped in is still unchecked. One pass, O(n) time, O(1) space.</p>
+</try>
+
+<try id="dsa-subsum" title="Subarray sum equals k" level="Medium" must="1">
+<p>Count the contiguous subarrays whose sum is exactly <code>k</code>. The list may contain negative numbers.</p>
+<pre class="plain">subarray_sum([1, 1, 1], 2)   # 2
+subarray_sum([1, 2, 3], 3)   # 2   ([1, 2] and [3])</pre>
+<p>Hint: with a running (prefix) sum, a subarray ending here sums to <code>k</code> if some earlier prefix equals <code>running - k</code>.</p>
+<solution>
+[[py:dsa_subarray_sum]]
+<p>Let <code>running</code> be the sum of everything so far. A subarray that ends at the current element and adds up to <code>k</code> exists for every earlier prefix whose sum was <code>running - k</code>, because removing that prefix leaves exactly <code>k</code>. The dictionary counts how many times each prefix sum has occurred. Seeding <code>counts[0] = 1</code> covers subarrays that start at index 0. Time O(n), space O(n). The brute force checks every pair of start and end in O(n²), and sliding window does <em>not</em> work here because of negative numbers.</p>
+</try>
+
+<try id="dsa-3sum" title="3Sum" level="Medium">
+<p>Find all unique triplets in a list that add up to 0.</p>
+<pre class="plain">three_sum([-1, 0, 1, 2, -1, -4])   # [[-1, -1, 2], [-1, 0, 1]]</pre>
+<solution>
+[[py:dsa_three_sum]]
+<p>Sort the list, then fix the first number and use two pointers on the rest to find pairs that complete a zero sum: if the total is too small, move <code>lo</code> right, and if too big, move <code>hi</code> left. Skipping repeated values (for the first number and for the second) is what keeps the result unique. Time O(n²), space O(1) besides the output. This is a classic "reduce to two sum" problem, so say that out loud.</p>
+</try>
+
+<h3>Strings and bits</h3>
+
+<try id="dsa-lcp" title="Longest common prefix" level="Easy" must="1">
+<p>Return the longest prefix shared by every string in a list, or an empty string.</p>
+<pre class="plain">longest_common_prefix(["flower", "flow", "flight"])   # "fl"
+longest_common_prefix(["dog", "car"])                 # ""</pre>
+<solution>
+[[py:dsa_lcp]]
+<p>Start with the first word as the prefix. For each other word, chop one letter off the end of the prefix until the word starts with it. Time O(total characters), space O(1). Watch the edge cases: an empty list, and a single word (which is its own prefix).</p>
+</try>
+
+<try id="dsa-strmisc" title="Reverse the words / is one string a rotation of another?" level="Easy">
+<p>Write two short functions. <code>reverse_words("  the sky  is blue ")</code> should give <code>"blue is sky the"</code>, ignoring extra spaces. <code>is_rotation("waterbottle", "erbottlewat")</code> should be <code>True</code>.</p>
+<solution>
+[[py:dsa_string_misc]]
+<p><code>split()</code> with no argument splits on any run of whitespace, so the extra spaces vanish. For the rotation trick: every rotation of <code>a</code> appears inside <code>a + a</code>, so check the lengths match, then check <code>b in a + a</code>. Both are O(n).</p>
+</try>
+
+<try id="dsa-bits" title="Bit tricks: single number, power of two, count set bits" level="Easy">
+<p>Three short problems on bits:</p>
+<ol>
+<li>Every value in a list appears twice, except one. Find it in O(n) time and O(1) space.</li>
+<li>Is <code>n</code> a power of two?</li>
+<li>Count the 1-bits in <code>n</code>.</li>
+</ol>
+<p>Hint: XOR (<code>^</code>) of a number with itself is 0, and <code>n &amp; (n - 1)</code> clears the lowest 1-bit of <code>n</code>.</p>
+<solution>
+[[py:dsa_bits]]
+<ul>
+<li><b>Single number:</b> XOR all the values. Pairs cancel each other (<code>x ^ x = 0</code>) and 0 does not change anything, so only the unpaired value remains.</li>
+<li><b>Power of two:</b> a power of two in binary has exactly one 1-bit, and <code>n &amp; (n - 1)</code> removes it, leaving 0. Check <code>n &gt; 0</code> too.</li>
+<li><b>Count set bits (Brian Kernighan's method):</b> repeat <code>n &amp;= n - 1</code>, counting how many times before <code>n</code> becomes 0. It loops once per 1-bit.</li>
+</ul>
+</try>
+
+<h3>Stacks and linked lists</h3>
+
+<try id="dsa-nge" title="Next greater element" level="Medium" must="1">
+<p>For each element, find the next element to its right that is strictly greater. Use <code>-1</code> when there is none.</p>
+<pre class="plain">next_greater([2, 1, 2, 4, 3])   # [4, 2, 4, -1, -1]</pre>
+<p>Hint: keep a stack of positions that are still waiting to find something bigger.</p>
+<solution>
+[[py:dsa_next_greater]]
+<p>This is the <b>monotonic stack</b> pattern. The stack holds indices of values that have not yet found a greater one. When a new value arrives, it is the answer for every waiting index with a smaller value, so pop and fill those in, then push the new index. Each index is pushed and popped at most once, so time is O(n) and space is O(n). The brute force is O(n²). The same pattern solves "daily temperatures" and "stock span".</p>
+</try>
+
+<try id="dsa-lllmore" title="Remove n-th node from the end / add two numbers as linked lists" level="Medium" must="1">
+<p>Use <code>ListNode</code>, <code>from_list</code> and <code>to_list</code> from the linked lists module.</p>
+<ol>
+<li><code>remove_nth_from_end(head, n)</code>: remove the n-th node counted from the end, in one pass.</li>
+<li><code>add_two_numbers(a, b)</code>: two numbers are stored as linked lists with digits in <em>reverse</em> order (<code>[2,4,3]</code> means 342). Return their sum in the same format.</li>
+</ol>
+<pre class="plain">remove_nth_from_end([1,2,3,4,5], 2)   # [1, 2, 3, 5]
+add_two_numbers([2,4,3], [5,6,4])     # [7, 0, 8]   (342 + 465 = 807)</pre>
+<solution>
+[[py:dsa_ll_more]]
+<ul>
+<li><b>Remove n-th from the end:</b> move <code>fast</code> n steps ahead, then move both pointers together until <code>fast</code> reaches the last node. Now <code>slow</code> sits right before the node to delete. A dummy node in front handles removing the head. One pass, O(n) time, O(1) space.</li>
+<li><b>Add two numbers:</b> walk both lists together, adding the digits and a carry. <code>divmod(total, 10)</code> gives the carry and the digit at once. The loop continues while either list has nodes <em>or</em> a carry remains, so <code>[9,9] + [1]</code> correctly produces <code>[0,0,1]</code>. Time O(max(n, m)).</li>
+</ul>
+</try>
+
+<h3>Searching and heaps</h3>
+
+<try id="dsa-rotated" title="Search in a rotated sorted array" level="Medium" must="1">
+<p>A sorted list of distinct values was rotated at an unknown point, for example <code>[4, 5, 6, 7, 0, 1, 2]</code>. Find the index of <code>target</code> in O(log n), or return <code>-1</code>.</p>
+<pre class="plain">search_rotated([4, 5, 6, 7, 0, 1, 2], 0)   # 4
+search_rotated([4, 5, 6, 7, 0, 1, 2], 3)   # -1</pre>
+<p>Hint: after you split at the middle, at least one half is always properly sorted.</p>
+<solution>
+[[py:dsa_rotated]]
+<p>At each step, work out which half is sorted: if <code>nums[lo] &lt;= nums[mid]</code>, the left half is sorted. Then ask whether the target lies inside that sorted half's range. If yes, search that half, and if no, search the other half. Every step still discards half the range, so it is O(log n) time and O(1) space. Test with the target being the first element, the last element, the pivot, and a missing value.</p>
+</try>
+
+<try id="dsa-kth" title="K-th largest element" level="Medium">
+<p>Return the k-th largest value in an unsorted list.</p>
+<pre class="plain">kth_largest([3, 2, 1, 5, 6, 4], 2)   # 5</pre>
+<solution>
+[[py:dsa_kth]]
+<p>Keep a <b>min-heap of size k</b> that always holds the k largest values seen so far. Push each number, and if the heap grows past k, pop the smallest. At the end, the root is the k-th largest. Time O(n log k), space O(k). Compare with the simple answer, <code>sorted(nums)[-k]</code>, which is O(n log n). The heap version wins when k is small or the data is a stream.</p>
+</try>
+
+<h3>Trees</h3>
+<p>Use <code>TreeNode</code>, <code>bst_insert</code> and <code>inorder</code> from the trees module to build a tree to test with.</p>
+
+<try id="dsa-trees" title="Invert a tree, validate a BST, lowest common ancestor" level="Medium" must="1">
+<p>Write three functions:</p>
+<ol>
+<li><code>invert_tree(root)</code>: swap the left and right children at every node.</li>
+<li><code>is_valid_bst(root)</code>: is this a valid binary search tree?</li>
+<li><code>lowest_common_ancestor(root, p, q)</code>: for a BST, the lowest node that has both values <code>p</code> and <code>q</code> beneath it.</li>
+</ol>
+<p>Hint for 2: comparing a node only with its direct children is not enough. Each node must fall inside a range set by its ancestors.</p>
+<solution>
+[[py:dsa_tree_more]]
+<ul>
+<li><b>Invert:</b> recursively invert both subtrees, then swap them. It is a classic quick recursion problem. Time O(n).</li>
+<li><b>Validate BST:</b> pass down an allowed range <code>(low, high)</code>. Going left, the upper limit becomes the current value. Going right, the lower limit becomes the current value. The common mistake is checking only parent against child, which wrongly accepts a tree where a deep node breaks an ancestor's rule. An alternative is to check that inorder traversal is strictly increasing.</li>
+<li><b>LCA in a BST:</b> if both values are smaller than the current node, go left. If both are larger, go right. Otherwise, the paths split here, so this is the answer. Time O(height), space O(1).</li>
+</ul>
+</try>
+
+<h3>Dynamic programming</h3>
+<p>Dynamic programming (DP) applies when a problem breaks into <b>overlapping subproblems</b> and the best answer is built from the best answers to smaller ones. Use this recipe every time:</p>
+<ol>
+<li><b>State:</b> what does <code>dp[i]</code> mean, in words?</li>
+<li><b>Recurrence:</b> how does <code>dp[i]</code> follow from smaller states?</li>
+<li><b>Base case:</b> the smallest answers you know directly.</li>
+<li><b>Order:</b> fill the table so the pieces you need already exist.</li>
+<li><b>Answer:</b> which cell holds the result? Then see if you can shrink the memory.</li>
+</ol>
+
+<try id="dsa-stairs" title="Climbing stairs" level="Easy" must="1">
+<p>You can climb 1 or 2 steps at a time. How many distinct ways are there to reach step <code>n</code>?</p>
+<pre class="plain">climb_stairs(1) = 1,  climb_stairs(2) = 2,  climb_stairs(3) = 3,  climb_stairs(5) = 8</pre>
+<p>Hint: to reach step <code>n</code>, you came from step <code>n-1</code> or step <code>n-2</code>.</p>
+<solution>
+[[py:dsa_stairs]]
+<p>State: <code>ways(n)</code> is the number of ways to reach step n. Recurrence: <code>ways(n) = ways(n-1) + ways(n-2)</code>, which is the Fibonacci sequence. Because only the last two values are needed, two variables replace the whole table: O(n) time and O(1) space. The plain recursion without memory would be O(2<sup>n</sup>), which is exactly why DP exists.</p>
+</try>
+
+<try id="dsa-rob" title="House robber" level="Medium">
+<p>Houses in a row hold money, and you cannot rob two adjacent houses. What is the most you can take?</p>
+<pre class="plain">rob([1, 2, 3, 1])      # 4   (houses 1 and 3)
+rob([2, 7, 9, 3, 1])   # 12  (houses 1, 3 and 5)</pre>
+<solution>
+[[py:dsa_rob]]
+<p>At each house you choose: <b>take</b> it (then you must have skipped the previous one, so add to the "skip" total) or <b>skip</b> it (keep the best of the previous two choices). The two running variables hold those totals. The tuple assignment evaluates the right side first using the old values, which is what makes the update correct. Time O(n), space O(1).</p>
+</try>
+
+<try id="dsa-coin" title="Coin change" level="Medium" must="1">
+<p>Given coin values and a target amount, return the <b>fewest coins</b> that make the amount, or <code>-1</code> if it is impossible. You have unlimited coins of each value.</p>
+<pre class="plain">coin_change([1, 2, 5], 11)   # 3   (5 + 5 + 1)
+coin_change([2], 3)          # -1
+coin_change([1, 3, 4], 6)    # 2   (3 + 3, not 4 + 1 + 1)</pre>
+<p>Watch out: always picking the biggest coin (greedy) fails on the third example.</p>
+<solution>
+[[py:dsa_coin]]
+<p>State: <code>dp[a]</code> is the fewest coins needed to make amount <code>a</code>. Recurrence: try every coin <code>c</code> that fits, and take <code>dp[a - c] + 1</code> if it improves the best. Base case: <code>dp[0] = 0</code>. Unreachable amounts stay at infinity, which becomes <code>-1</code> at the end. Time O(amount × number of coins), space O(amount). The third example shows why greedy is wrong and DP is needed: greedy would choose 4 first and end up with 3 coins, while the best is 2.</p>
+</try>
+
+<try id="dsa-lcs" title="Longest common subsequence" level="Medium">
+<p>Return the length of the longest subsequence (characters in order, not necessarily next to each other) that two strings share.</p>
+<pre class="plain">lcs("abcde", "ace")   # 3   ("ace")</pre>
+<solution>
+[[py:dsa_lcs]]
+<p>State: <code>dp[i][j]</code> is the LCS length of the first <code>i</code> characters of <code>a</code> and the first <code>j</code> characters of <code>b</code>. If the two current characters match, extend the best answer without them (<code>dp[i-1][j-1] + 1</code>). Otherwise take the better of dropping a character from either string. Time and space O(n × m). A subsequence need not be contiguous, and that is the difference from a "substring" problem.</p>
+</try>
+
+<h3>Graphs</h3>
+<p>A graph is a set of nodes connected by edges. The usual representation in interviews is an <b>adjacency list</b>: a dictionary that maps each node to the list of its neighbours. It uses O(V + E) space, unlike an adjacency matrix, which uses O(V²).</p>
+
+<try id="dsa-graph" title="BFS and DFS" level="Medium" must="1">
+<p>For <code>graph = {"A": ["B", "C"], "B": ["D"], "C": ["D"], "D": []}</code>, write:</p>
+<ol>
+<li><code>bfs(graph, start)</code>, returning the nodes in the order they are visited, level by level</li>
+<li><code>dfs(graph, node)</code>, returning the visit order going as deep as possible first</li>
+</ol>
+<pre class="plain">bfs(graph, "A")   # ["A", "B", "C", "D"]
+dfs(graph, "A")   # ["A", "B", "D", "C"]</pre>
+<solution>
+[[py:dsa_graph]]
+<p><b>BFS</b> uses a queue, so nodes closest to the start are processed first. That makes it the tool for shortest paths when every edge costs the same. <b>DFS</b> uses recursion (or an explicit stack) and goes deep before backtracking. Both need a <code>seen</code> set, or a graph with cycles would loop forever. Both run in O(V + E) time.</p>
+</try>
+
+<try id="dsa-islands" title="Number of islands" level="Medium" must="1">
+<p>A grid of <code>"1"</code> (land) and <code>"0"</code> (water) is given as a list of lists. Count the islands. An island is land connected up, down, left or right.</p>
+<pre class="plain">11000
+11000
+00100
+00011      ->  3 islands</pre>
+<solution>
+[[py:dsa_islands]]
+<p>Scan every cell. When you find land, you have found a new island, so count it, and then use DFS to flood-fill (<code>sink</code>) the entire island to water, so it is never counted again. Time O(rows × cols), and space O(rows × cols) in the worst case for the recursion. Mention that you modified the input grid, and that you could use a separate <code>seen</code> set if the input must stay unchanged. Very deep recursion can hit Python's recursion limit on huge grids, and BFS with a queue avoids that.</p>
+</try>
+
+<qaset id="qa-dsa" title="DSA concept questions">
+<qa q="Recursion vs iteration?">Recursion solves a problem by calling itself on a smaller input, and is often shorter and clearer for trees and graphs. Iteration uses loops, and avoids the call-stack cost and the risk of a stack overflow. Every recursion needs a base case, or it never stops.</qa>
+<qa q="What is dynamic programming?">A technique for problems with overlapping subproblems and optimal substructure. Instead of recomputing the same sub-answers, you store them. Memoization does this top-down (recursion plus a cache), while tabulation does it bottom-up (filling a table).</qa>
+<qa q="Greedy vs dynamic programming?">Greedy takes the best-looking choice at each step and never reconsiders. It is fast but only correct for some problems. DP considers all the choices through stored sub-answers, so it is always correct when the problem has the right structure. Coin change with coins 1, 3, 4 is the standard example where greedy fails.</qa>
+<qa q="Adjacency list vs adjacency matrix?">A list stores only the edges that exist, giving O(V + E) space and fast iteration over neighbours, so it is best for sparse graphs. A matrix uses O(V²) space but checks whether an edge exists in O(1), which suits dense graphs.</qa>
+<qa q="What is amortized time complexity?">The average cost per operation over a long sequence, even if a single operation is occasionally expensive. Appending to a Python list is amortized O(1): it is normally cheap, and the occasional resize is spread out over many appends.</qa>
+<qa q="Best, average and worst case?">The fastest, typical and slowest running time for an input of size n. Quicksort is O(n log n) on average but O(n²) in the worst case. Interviewers usually want the worst case unless you say otherwise.</qa>
+<qa q="What does in-place mean?">The algorithm changes the input directly and uses only O(1) extra space, rather than building a new copy. Many array problems ask for it, and it usually means using two pointers or swaps.</qa>
+<qa q="Hash table vs balanced BST for storing data?">A hash table gives O(1) average lookup, but its keys are unordered. A balanced BST gives O(log n) operations, but keeps keys in sorted order, so range queries and "next larger key" are easy.</qa>
+<qa q="How do you approach a problem you have never seen?">Restate it, work a small example by hand, write the brute force and its complexity, look for what is repeated or wasted, and match it to a pattern (hashmap, two pointers, sliding window, stack, DP). Then code and test. Saying this process aloud is worth as much as the answer.</qa>
+</qaset>
+</mod>

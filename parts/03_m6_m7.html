@@ -1,0 +1,136 @@
+<mod id="m6" day="1" time="75 minutes" title="Binary search, sorting and trees">
+<h3>Binary search</h3>
+<p>If the data is <b>sorted</b>, you do not need to look at every item. Check the middle: if it is your target, you are done; if the target is bigger, discard the left half; otherwise discard the right half. The range halves each step, so the time is O(log n). For a million items, that is about 20 steps.</p>
+
+<try id="bsearch" title="Binary search" must="1">
+<p>Write <code>binary_search(nums, target)</code> for a sorted list. Return the index, or <code>-1</code> if it is not there. Do not use the built-in <code>index</code> or <code>bisect</code>.</p>
+<solution>
+[[py:binary_search]]
+<p>The loop runs while <code>lo &lt;= hi</code>, so a one-element range is still checked. After a comparison you move <code>lo</code> or <code>hi</code> to <code>mid + 1</code> or <code>mid - 1</code>, never leaving them at <code>mid</code>, which could loop forever.</p>
+<p>Test with: an empty list, one element, the first element, the last element, and a value that is missing. Off-by-one errors live at exactly those places.</p>
+</try>
+
+<try id="insertpos" title="Search insert position">
+<p>Given a sorted list and a target, return the index where the target is found, or where it would be inserted to keep the list sorted.</p>
+<pre class="plain">search_insert([1, 3, 5, 6], 5)   # 2
+search_insert([1, 3, 5, 6], 2)   # 1
+search_insert([1, 3, 5, 6], 7)   # 4</pre>
+<solution>
+[[py:search_insert]]
+<p>This version uses a half-open range <code>[lo, hi)</code>, with <code>hi = len(nums)</code> because inserting at the very end is a valid answer. It finds the first position whose value is greater than or equal to the target. This is exactly what Python's <code>bisect.bisect_left</code> does, so you can mention it as the library shortcut.</p>
+</try>
+
+<h3>Sorting</h3>
+<table>
+<tr><th>Algorithm</th><th>Best</th><th>Average</th><th>Worst</th><th>Extra space</th><th>Stable?</th></tr>
+<tr><td>Bubble</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>Yes</td></tr>
+<tr><td>Selection</td><td>O(n²)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>No</td></tr>
+<tr><td>Insertion</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>Yes</td></tr>
+<tr><td>Merge</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n)</td><td>Yes</td></tr>
+<tr><td>Quick</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n²)</td><td>O(log n)</td><td>No</td></tr>
+<tr><td>Heap</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td><td>O(1)</td><td>No</td></tr>
+</table>
+<p>A sort is <b>stable</b> if equal items keep their original relative order. Python's built-in <code>sorted()</code> and <code>list.sort()</code> use Timsort, which is O(n log n) and stable.</p>
+
+<try id="mergesort" title="Merge sort">
+<p>Write <code>merge_sort(arr)</code> that returns a new sorted list. Idea: split in half, sort each half recursively, then merge the two sorted halves.</p>
+<solution>
+[[py:merge_sort]]
+<p>The base case is a list of 0 or 1 items, which is already sorted. The merge step walks two pointers, always taking the smaller front item; <code>&lt;=</code> (not <code>&lt;</code>) keeps equal items in their original order, making it stable. There are log n levels of splitting, and each level does O(n) merging work, so O(n log n) overall, with O(n) extra space.</p>
+</try>
+
+<h3>Trees</h3>
+<p>A <b>binary tree</b> node has up to two children. A <b>binary search tree (BST)</b> adds a rule: everything in the left subtree is smaller than the node, and everything in the right subtree is larger. That makes search, insert and delete O(height), which is O(log n) if the tree is balanced but O(n) if it degenerates into a chain.</p>
+<p>The four traversals, on a tree with root 8, children 3 and 10:</p>
+<ul>
+<li><b>Inorder</b> (left, node, right): gives a BST's values in sorted order.</li>
+<li><b>Preorder</b> (node, left, right): useful for copying a tree.</li>
+<li><b>Postorder</b> (left, right, node): useful for deleting a tree.</li>
+<li><b>Level order</b> (breadth-first): one level at a time, using a queue.</li>
+</ul>
+
+<try id="tree" title="BST insert, traversal, height" must="1">
+<p>Write a <code>TreeNode</code> class, then:</p>
+<ol>
+<li><code>bst_insert(root, val)</code>, returning the root</li>
+<li><code>inorder(root)</code>, returning a list</li>
+<li><code>height(root)</code>, where an empty tree has height 0</li>
+<li><code>level_order(root)</code>, returning a list of levels</li>
+</ol>
+<p>Insert <code>8, 3, 10, 1, 6, 14</code> and check that inorder gives <code>[1, 3, 6, 8, 10, 14]</code>, height is 3, and level order is <code>[[8], [3, 10], [1, 6, 14]]</code>.</p>
+<solution>
+[[py:tree]]
+<p>Insert, inorder and height are naturally recursive: solve for the left and right subtrees, then combine. Level order is not recursive. It uses a <code>deque</code> as a queue and processes exactly <code>len(queue)</code> nodes per level, which is what separates the levels. All four are O(n) except insert, which is O(height).</p>
+</try>
+
+<qaset id="qa-ds" title="Sorting, search and tree questions">
+<qa q="Quicksort vs merge sort?">Merge sort always takes O(n log n), is stable, and needs O(n) extra space. Quicksort is usually faster in practice and sorts in place, but its worst case is O(n²) (for example, an already sorted array with a bad pivot choice) and it is not stable.</qa>
+<qa q="Which sort would you use for a nearly sorted list?">Insertion sort, which is close to O(n) on nearly sorted data. In practice, Python's Timsort already exploits that.</qa>
+<qa q="What is the worst case for a BST and how do you avoid it?">Inserting sorted data creates a chain, so operations take O(n). Self-balancing trees such as AVL or red-black trees rotate nodes to keep the height around O(log n).</qa>
+<qa q="DFS vs BFS?">Depth-first search goes as deep as possible before backtracking, using a stack or recursion. Breadth-first search explores level by level, using a queue, and finds the shortest path in an unweighted graph.</qa>
+<qa q="What does inorder traversal of a BST give?">The values in sorted ascending order.</qa>
+<qa q="What is a heap?">A complete binary tree in which every parent is smaller than (min-heap) or larger than (max-heap) its children. The smallest or largest element is always at the root, and push and pop are O(log n). It powers priority queues.</qa>
+<qa q="Why is binary search O(log n)?">Each step discards half the remaining range. The number of times you can halve n before reaching 1 is log₂ n.</qa>
+</qaset>
+</mod>
+
+<mod id="m7" day="1" time="60 minutes" title="Object-oriented programming">
+<p>OOP questions are guaranteed in a fresher interview. The safest approach is to answer each one with a definition <em>and</em> a small example. The bank-account example below fits HSBC perfectly, and you can reuse it for every question.</p>
+
+<h3>The four pillars in plain words</h3>
+<table>
+<tr><th>Pillar</th><th>Meaning</th><th>Bank-account example</th></tr>
+<tr><td>Encapsulation</td><td>Bundle data with the methods that use it, and control access to it</td><td>The balance is stored internally and changed only through <code>deposit</code> and <code>withdraw</code>, which check the rules</td></tr>
+<tr><td>Abstraction</td><td>Show what something does, hide how it does it</td><td>You call <code>withdraw(500)</code> without knowing how overdraft checks work inside</td></tr>
+<tr><td>Inheritance</td><td>A class reuses and extends another class</td><td><code>SavingsAccount</code> and <code>CurrentAccount</code> both inherit from <code>Account</code></td></tr>
+<tr><td>Polymorphism</td><td>One interface, many behaviours</td><td>Calling <code>describe()</code> on any account works, and each type answers in its own way</td></tr>
+</table>
+
+<try id="bank" title="Build the account hierarchy" must="1">
+<p>Design these classes, then use them:</p>
+<ul>
+<li>An abstract base class <code>Account</code> with an owner and a balance, <code>deposit(amount)</code> (reject amounts that are not positive), <code>withdraw(amount)</code>, and a <code>describe()</code> method.</li>
+<li><code>withdraw</code> must reject a request that goes beyond the balance plus the account's <em>overdraft limit</em>. Each account type decides its own limit through an abstract method.</li>
+<li><code>SavingsAccount</code> allows no overdraft. <code>CurrentAccount</code> allows 1000, and its <code>describe()</code> adds a note to the parent's text.</li>
+<li>A class variable <code>bank_name</code>, and a read-only <code>balance</code> property.</li>
+</ul>
+<p>Then create one of each, loop over both calling <code>describe()</code>, and check that withdrawing 600 from a Savings account with 500 fails.</p>
+<solution>
+[[py:oop_bank]]
+<ul>
+<li><b>Abstract class:</b> <code>Account</code> inherits from <code>ABC</code> and has an <code>@abstractmethod</code>, so <code>Account("x")</code> raises <code>TypeError</code>. Subclasses must implement <code>overdraft_limit</code>.</li>
+<li><b>Encapsulation:</b> <code>_balance</code> is marked internal by the underscore, and outside code reads it through the <code>balance</code> property. Python does not enforce privacy, but the convention is universal.</li>
+<li><b>Polymorphism:</b> <code>withdraw</code> is written once, yet behaves differently per account type because it calls <code>self.overdraft_limit()</code>.</li>
+<li><b>Overriding:</b> both subclasses replace <code>overdraft_limit</code>, and <code>CurrentAccount.describe</code> reuses the parent's version through <code>super()</code>.</li>
+<li><b>Class vs instance variables:</b> <code>bank_name</code> belongs to the class and is shared. <code>owner</code> and <code>_balance</code> belong to each object.</li>
+</ul>
+</try>
+
+<try id="oopmisc" title="Overloading, class methods and static methods">
+<p>Answer these by writing code, not by explaining:</p>
+<ol>
+<li>Python has no true method overloading. Show how you would make an <code>add</code> method that accepts 2 or 3 or any number of arguments.</li>
+<li>Show a <code>classmethod</code> used as an alternative constructor, and a <code>staticmethod</code>. When would you pick each?</li>
+</ol>
+<solution>
+[[py:oop_misc]]
+<ul>
+<li><b>Overloading:</b> if you define two methods with the same name, the second silently replaces the first. Python's answer is default arguments or <code>*args</code>.</li>
+<li><b>classmethod</b> receives the class (<code>cls</code>) and is ideal for alternative constructors like <code>from_string</code>. It also works correctly with subclasses.</li>
+<li><b>staticmethod</b> receives neither the object nor the class. It is just a function that lives in the class's namespace because it belongs logically with it.</li>
+</ul>
+</try>
+
+<qaset id="qa-oop" title="OOP questions">
+<qa q="Explain the four pillars of OOP.">Encapsulation: bundle data and the methods that act on it, and control access. Abstraction: expose what an object does, hide how. Inheritance: a child class reuses and extends a parent. Polymorphism: the same call behaves differently depending on the object. Give the bank-account example for each.</qa>
+<qa q="Abstraction vs encapsulation?">Abstraction is about the <em>design</em>: showing only the essential interface. Encapsulation is about the <em>implementation</em>: keeping the data and the code that manipulates it together, with controlled access. Abstraction hides complexity; encapsulation protects state.</qa>
+<qa q="Method overloading vs overriding?">Overloading is several methods with the same name and different parameters, decided at compile time (Java, C++). Python does not support it directly. Overriding is a subclass replacing a parent's method with the same signature, decided at runtime. It is how polymorphism works.</qa>
+<qa q="Abstract class vs interface?">An abstract class can hold both implemented methods and abstract ones, plus state. An interface (in Java) only declares behaviour, and a class can implement many of them. Python has no <code>interface</code> keyword. It uses <code>ABC</code> with abstract methods, or duck typing.</qa>
+<qa q="Inheritance vs composition?">Inheritance models an "is-a" relationship (a savings account <em>is an</em> account). Composition models "has-a" (a bank <em>has</em> accounts). Prefer composition when the relationship is not truly is-a, because inheritance couples the child tightly to the parent.</qa>
+<qa q="What are self and __init__?">Inside a method, <code>self</code> is the object the method was called on. <code>__init__</code> is the initializer that runs right after an object is created, setting up its instance variables. It is commonly called the constructor.</qa>
+<qa q="Class variable vs instance variable?">A class variable is defined on the class and shared by all instances. An instance variable is set on <code>self</code> and belongs to one object. Changing a class variable through the class affects everyone.</qa>
+<qa q="Does Python have private variables?">Not truly. A single underscore (<code>_x</code>) signals "internal use". A double underscore (<code>__x</code>) triggers name mangling, which makes accidental access harder but is not real security.</qa>
+<qa q="What is duck typing?">If an object has the methods you call, it works, no matter its class: "if it walks like a duck and quacks like a duck." It is Python's informal version of polymorphism.</qa>
+<qa q="Does Python support multiple inheritance?">Yes. When several parents define the same method, Python follows the Method Resolution Order (MRO), computed by the C3 algorithm. You can inspect it with <code>ClassName.__mro__</code>.</qa>
+</qaset>
+</mod>

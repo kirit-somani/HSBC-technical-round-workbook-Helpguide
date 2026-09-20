@@ -1,0 +1,143 @@
+<mod id="m8" day="2" time="150 minutes" title="SQL">
+<p>SQL is asked in almost every technical round, both as theory and as "write a query on this table". You get better by writing queries against real data, so this module gives you a small bank database and ten problems.</p>
+
+<h3>Set up your practice database</h3>
+<p>Python ships with SQLite, so you need nothing to install. Save this schema as <code>schema.sql</code>. It creates four tables and fills them with data:</p>
+[[sql:schema]]
+<p>Then run any query with this short script (it needs SQLite 3.25 or newer for window functions, which any current Python has):</p>
+[[py:sql_runner]]
+<p>Change the <code>query</code> text and run it again for each exercise. Here is what the tables contain:</p>
+<table>
+<tr><th>Table</th><th>Columns</th><th>Notes</th></tr>
+<tr><td><code>employees</code></td><td>id, name, salary, department_id, manager_id</td><td>8 rows. <code>manager_id</code> points at another employee, and is <code>NULL</code> for the top of a team</td></tr>
+<tr><td><code>departments</code></td><td>id, name</td><td>Engineering, Operations, Finance, Legal (Legal has no employees)</td></tr>
+<tr><td><code>customers</code></td><td>id, name</td><td>Amit, Bhavna, Chirag</td></tr>
+<tr><td><code>orders</code></td><td>id, customer_id, amount</td><td>Amit has two orders, Chirag one, Bhavna none</td></tr>
+</table>
+
+<h3>Ideas to know before you write queries</h3>
+<p><b>Logical order of execution.</b> You write <code>SELECT</code> first, but the database evaluates a query in this order: <code>FROM</code> and <code>JOIN</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. That explains why <code>WHERE</code> cannot use an aggregate like <code>COUNT(*)</code> (groups do not exist yet), while <code>HAVING</code> can.</p>
+<table>
+<tr><th>Join</th><th>Returns</th></tr>
+<tr><td><code>INNER JOIN</code></td><td>Only rows that match on both sides</td></tr>
+<tr><td><code>LEFT JOIN</code></td><td>All rows from the left table, and matches from the right (<code>NULL</code> where there is none)</td></tr>
+<tr><td><code>RIGHT JOIN</code></td><td>The mirror image of LEFT JOIN</td></tr>
+<tr><td><code>FULL OUTER JOIN</code></td><td>All rows from both sides, matched where possible</td></tr>
+<tr><td>Self join</td><td>A table joined to itself under two aliases, such as employee and manager</td></tr>
+</table>
+<tip title="NULL is not a value">
+<p><code>salary = NULL</code> is never true. Use <code>IS NULL</code> or <code>IS NOT NULL</code>. Also, <code>COUNT(*)</code> counts rows, while <code>COUNT(column)</code> skips <code>NULL</code>s. That difference matters in exercise 8.</p>
+</tip>
+
+<try id="sql1" title="1. Employees who earn more than the average salary">
+<p>List the name and salary of everyone who earns above the company average.</p>
+<pre class="plain">Expected: Asha 90000, Rahul 70000, Meera 95000   (the average is 65000)</pre>
+<solution>
+[[sql:q_above_avg]]
+<p>The subquery in brackets runs first and returns one number, the average. The outer query then compares every row to that number.</p>
+</try>
+
+<try id="sql2" title="2. Second highest salary" must="1">
+<p>Return the second highest <em>distinct</em> salary. Then write a second version that works for any N (say, the third highest).</p>
+<pre class="plain">Expected: 90000   (and 70000 for the third highest)</pre>
+<solution>
+<p><b>Version 1: the largest value below the largest value.</b></p>
+[[sql:q_second_highest]]
+<p><b>Version 2: Nth highest with <code>LIMIT</code> and <code>OFFSET</code>.</b> <code>DISTINCT</code> matters, because two employees can share a salary.</p>
+[[sql:q_nth_highest]]
+<p><b>Version 3: with a window function.</b> <code>DENSE_RANK</code> gives tied salaries the same rank with no gaps, so rank 2 is the second highest <em>value</em>.</p>
+[[sql:q_dense_rank]]
+<p>If there is no second highest, version 1 returns <code>NULL</code>, which is usually what the question wants. Interviewers love this problem, so know at least two versions.</p>
+</try>
+
+<try id="sql3" title="3. Find duplicate values" must="1">
+<p>Find every salary that is shared by more than one employee, and how many employees share it.</p>
+<pre class="plain">Expected: 50000 -> 2,  60000 -> 2</pre>
+<solution>
+[[sql:q_dup_salary]]
+<p>Group by the column that may repeat, then keep only groups with more than one row. <code>HAVING</code> filters after grouping. <code>WHERE</code> would run before the groups exist. This pattern also finds duplicate emails, duplicate account numbers, and so on.</p>
+</try>
+
+<try id="sql4" title="4. Employees who earn more than their manager" must="1">
+<p>Show each employee who earns more than their own manager, with both salaries.</p>
+<pre class="plain">Expected: Meera 95000, manager Asha 90000</pre>
+<solution>
+[[sql:q_manager]]
+<p>This is a <b>self join</b>: the same table appears twice under the aliases <code>e</code> (employee) and <code>m</code> (manager), matched by <code>e.manager_id = m.id</code>. Employees with no manager drop out of the inner join, which is right here.</p>
+</try>
+
+<try id="sql5" title="5. Customers who never placed an order" must="1">
+<p>Find customers with no rows in <code>orders</code>.</p>
+<pre class="plain">Expected: Bhavna</pre>
+<solution>
+[[sql:q_never_ordered]]
+<p>A <code>LEFT JOIN</code> keeps every customer. Customers with no matching order get <code>NULL</code> in the order columns, so filtering on <code>o.id IS NULL</code> keeps exactly those customers. The alternatives are <code>NOT EXISTS (...)</code> and <code>NOT IN (SELECT customer_id FROM orders)</code>. Be careful with <code>NOT IN</code>: if the subquery can return a <code>NULL</code>, the whole condition returns nothing.</p>
+</try>
+
+<try id="sql6" title="6. Highest-paid employee in each department" must="1">
+<p>For every department, show the employee (or employees) with the top salary.</p>
+<pre class="plain">Expected:
+Engineering  Meera   95000
+Finance      Neha    60000
+Finance      Vikram  60000
+Operations   Karan   50000
+Operations   Sana    50000</pre>
+<solution>
+[[sql:q_dept_max]]
+<p>The inner query is <b>correlated</b>: it uses <code>e.department_id</code> from the outer row, so it recomputes the department's maximum for each employee. Notice that ties show up (Finance and Operations each return two people), which is usually the right answer to "who has the highest salary". If you only wanted one person per department, you would use <code>ROW_NUMBER()</code> instead. The window-function form of this query is in exercise 9.</p>
+</try>
+
+<try id="sql7" title="7. Departments with more than 2 employees">
+<p>Show department names and headcounts, only for departments with more than 2 people.</p>
+<pre class="plain">Expected: Engineering 3, Operations 3</pre>
+<solution>
+[[sql:q_headcount_having]]
+<p>Join, group by department, and filter the groups with <code>HAVING</code>. Finance has only 2 people, so it is removed.</p>
+</try>
+
+<try id="sql8" title="8. Every department with headcount and payroll, including empty ones">
+<p>List all four departments with their headcount and total salary, largest payroll first. Legal has nobody, and should still appear with zeros.</p>
+<pre class="plain">Expected:
+Engineering  3  255000
+Operations   3  145000
+Finance      2  120000
+Legal        0  0</pre>
+<solution>
+[[sql:q_dept_left]]
+<p>Two details make this work. Use <code>LEFT JOIN</code> from <code>departments</code>, so Legal is not dropped. And use <code>COUNT(e.id)</code>, not <code>COUNT(*)</code>: Legal's single joined row has a <code>NULL</code> employee id, so <code>COUNT(e.id)</code> correctly gives 0, while <code>COUNT(*)</code> would say 1. <code>COALESCE</code> turns the <code>NULL</code> sum into 0.</p>
+</try>
+
+<try id="sql9" title="9. Rank employees within their department">
+<p>Show each employee's rank by salary inside their own department, using a window function.</p>
+<solution>
+[[sql:q_window_rank]]
+<p><code>PARTITION BY</code> restarts the ranking for each department, and <code>ORDER BY</code> sets the ranking order. In Operations, salaries 50000, 50000, 45000 give:</p>
+<table>
+<tr><th>Function</th><th>Ranks</th><th>Behaviour on ties</th></tr>
+<tr><td><code>ROW_NUMBER()</code></td><td>1, 2, 3</td><td>Always unique, ties broken arbitrarily</td></tr>
+<tr><td><code>RANK()</code></td><td>1, 1, 3</td><td>Ties share a rank, and the next rank is skipped</td></tr>
+<tr><td><code>DENSE_RANK()</code></td><td>1, 1, 2</td><td>Ties share a rank, no gap</td></tr>
+</table>
+<p>To get the top earner per department, wrap this in a subquery and filter <code>rnk = 1</code>.</p>
+</try>
+
+<try id="sql10" title="10. Total amount spent per customer">
+<p>Show each customer's total order amount, biggest spender first. Customers with no orders do not need to appear.</p>
+<pre class="plain">Expected: Amit 800, Chirag 700</pre>
+<solution>
+[[sql:q_customer_totals]]
+<p>The everyday join plus <code>GROUP BY</code> plus an aggregate. Change to <code>LEFT JOIN</code> and wrap the sum in <code>COALESCE(SUM(o.amount), 0)</code> if you also want customers with no orders.</p>
+</try>
+
+<qaset id="qa-sql" title="SQL theory questions">
+<qa q="DELETE vs TRUNCATE vs DROP?">DELETE removes selected rows (it can use WHERE, fires triggers, and can be rolled back). TRUNCATE removes all rows quickly and resets the table, with no WHERE. DROP removes the whole table, including its structure.</qa>
+<qa q="WHERE vs HAVING?">WHERE filters individual rows before grouping. HAVING filters groups after GROUP BY and can use aggregate functions like COUNT and SUM.</qa>
+<qa q="INNER JOIN vs LEFT JOIN?">INNER JOIN keeps only rows with a match on both sides. LEFT JOIN keeps every row from the left table and fills the right side with NULL where nothing matches.</qa>
+<qa q="UNION vs UNION ALL?">UNION combines two result sets and removes duplicates, which costs a sort or hash. UNION ALL keeps duplicates and is faster. Use UNION ALL when duplicates are impossible or acceptable.</qa>
+<qa q="Primary key vs unique key?">A primary key uniquely identifies each row, cannot be NULL, and a table has only one. A unique key also enforces uniqueness, but a table can have many of them, and (depending on the database) they may allow a NULL.</qa>
+<qa q="What is an index and what does it cost?">An index is a separate structure (usually a B-tree) that lets the database find rows without scanning the whole table, turning an O(n) scan into roughly O(log n). The cost is extra storage and slower inserts, updates and deletes, because the index must be kept in sync.</qa>
+<qa q="Subquery vs join?">Both can combine data from several tables. Joins are usually clearer and often faster for combining columns. Subqueries read naturally for "compare with an aggregate" or "exists or not" questions. Modern optimizers often turn one into the other.</qa>
+<qa q="What is a view?">A saved query that behaves like a virtual table. It can simplify complex queries and restrict which columns a user sees, and it stores no data itself (unless it is materialized).</qa>
+<qa q="COUNT(*) vs COUNT(column) vs COUNT(DISTINCT column)?">COUNT(*) counts all rows. COUNT(column) counts rows where that column is not NULL. COUNT(DISTINCT column) counts the different non-NULL values.</qa>
+</qaset>
+</mod>

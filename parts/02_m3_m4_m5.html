@@ -1,0 +1,170 @@
+<mod id="m3" day="1" time="60 minutes" title="Hashmaps">
+<p>A hashmap (Python's <code>dict</code> and <code>set</code>) turns a key into a storage position using a hash function, so lookup, insert and delete are O(1) on average. Different keys can land on the same position (a <b>collision</b>), which Python resolves by probing for another free slot. In the worst case with many collisions, operations degrade to O(n), but that is rare.</p>
+<p>Keys must be <b>hashable</b>, meaning immutable: strings, numbers and tuples work, but lists do not.</p>
+<p>Most hashmap problems follow one of three patterns:</p>
+<ul>
+<li><b>Seen before?</b> Remember what you have met so far, so a repeat or a needed partner is found instantly.</li>
+<li><b>Counting.</b> How many times does each item appear?</li>
+<li><b>Grouping.</b> Put items that share a key into the same bucket.</li>
+</ul>
+
+<try id="twosum" title="Two sum" must="1">
+<p>Given a list of numbers and a target, return the indices of the two numbers that add up to the target. Assume exactly one answer exists.</p>
+<pre class="plain">two_sum([2, 7, 11, 15], 9)   # [0, 1], because 2 + 7 = 9</pre>
+<p>Do it in two steps, the way you would in the interview: first write the brute force and state its complexity, then improve it with a dictionary.</p>
+<solution>
+<p><b>Brute force:</b> check every pair. Time O(n²), space O(1).</p>
+[[py:two_sum_brute]]
+<p><b>Optimized:</b> as you walk the list, ask "have I already seen the number that completes this one?" If yes, you are done.</p>
+[[py:two_sum]]
+<p><b>Walkthrough on <code>[2, 7, 11, 15]</code>, target 9:</b></p>
+<ul>
+<li><code>i=0</code>, <code>n=2</code>, need 7. Not in <code>seen</code> yet, so store <code>{2: 0}</code>.</li>
+<li><code>i=1</code>, <code>n=7</code>, need 2. It is in <code>seen</code> at index 0, so return <code>[0, 1]</code>.</li>
+</ul>
+<p>Time O(n), space O(n). This is the trade you should say out loud: extra memory for speed. Check <code>need in seen</code> <em>before</em> storing the current number, so a number is never paired with itself.</p>
+</try>
+
+<try id="hashbasics" title="Four quick hashmap problems" must="1">
+<p>Write each one:</p>
+<ol>
+<li><code>is_anagram(a, b)</code>: do two strings use exactly the same letters with the same counts?</li>
+<li><code>has_duplicate(nums)</code>: does any value appear twice?</li>
+<li><code>group_anagrams(words)</code>: <code>["eat","tea","tan","ate","nat","bat"]</code> becomes <code>[["eat","tea","ate"],["tan","nat"],["bat"]]</code>.</li>
+<li><code>top_k_frequent(nums, k)</code>: the <code>k</code> most common values.</li>
+</ol>
+<solution>
+[[py:hash_basics]]
+<ul>
+<li><b>Anagram:</b> two <code>Counter</code>s are equal when every letter has the same count. O(n).</li>
+<li><b>Duplicate:</b> a set drops repeats, so a shorter set means a duplicate existed. O(n).</li>
+<li><b>Group anagrams:</b> words that are anagrams share the same <em>sorted letters</em>, so that sorted string is the dictionary key. If the longest word has length <code>L</code>, this costs O(n · L log L).</li>
+<li><b>Top k:</b> <code>most_common(k)</code> is roughly O(n log k). A bucket approach (index = frequency) can reach O(n), which is a nice follow-up to mention.</li>
+</ul>
+</try>
+
+<qaset id="qa-hash" title="Hashmap questions">
+<qa q="How does a hash table work?">A hash function converts the key into an integer, which is mapped to a slot in an underlying array. Lookup computes the same hash and jumps straight to that slot, so on average it takes O(1) time regardless of size.</qa>
+<qa q="What is a collision and how is it handled?">A collision is two different keys mapping to the same slot. Chaining stores a small list of entries in each slot. Open addressing (used by Python's dict) probes for the next free slot. Both stay fast as long as the table is not too full, which is why tables resize as they grow.</qa>
+<qa q="Why can't a list be a dictionary key?">Keys must be hashable, and a hash must never change. A list is mutable, so its contents (and hash) could change after insertion and the dictionary could never find it again. Use a tuple instead.</qa>
+<qa q="dict vs set?">A dict maps keys to values. A set stores only unique keys with no values. Both give O(1) average membership checks.</qa>
+<qa q="What is the worst-case time of a dict lookup?">O(n), if all keys collide into the same place. With a good hash function this is very unlikely, so we quote O(1) average.</qa>
+<qa q="When would you not use a hashmap?">When you need the data in sorted order (use a sorted list or tree), when memory is very tight, or when the keys have no good hash function.</qa>
+</qaset>
+</mod>
+
+<mod id="m4" day="1" time="75 minutes" title="Arrays, strings and two pointers">
+<p>Array and string problems reuse a small set of patterns. Learn to recognise them:</p>
+<table>
+<tr><th>Pattern</th><th>Use it when</th><th>Example below</th></tr>
+<tr><td>Two pointers</td><td>Working from both ends, or one slow and one fast pointer</td><td>Valid palindrome, move zeroes</td></tr>
+<tr><td>Sliding window</td><td>A contiguous stretch that grows and shrinks</td><td>Longest substring without repeats</td></tr>
+<tr><td>Track a running best</td><td>One pass while remembering the best so far</td><td>Stock profit, max subarray</td></tr>
+<tr><td>Sort first</td><td>Order makes neighbours easy to compare</td><td>Merge intervals</td></tr>
+</table>
+
+<try id="palindrome" title="Valid palindrome" must="1">
+<p>Return <code>True</code> if a string reads the same forwards and backwards, ignoring case and anything that is not a letter or digit.</p>
+<pre class="plain">is_palindrome("A man, a plan, a canal: Panama")   # True
+is_palindrome("race a car")                        # False</pre>
+<p>Hint: put one pointer at each end and move them towards each other. Try to do it without building a cleaned copy of the string.</p>
+<solution>
+[[py:palindrome]]
+<p>Skip non-alphanumeric characters on each side, then compare the two characters case-insensitively. Time O(n), space O(1). The simpler version <code>t = "".join(c.lower() for c in s if c.isalnum()); return t == t[::-1]</code> is also fine (O(n) space), and worth mentioning as the quick option.</p>
+</try>
+
+<try id="profit" title="Best time to buy and sell a stock">
+<p><code>prices[i]</code> is the price on day <code>i</code>. Buy once, sell later, and return the maximum profit (0 if no profit is possible).</p>
+<pre class="plain">max_profit([7, 1, 5, 3, 6, 4])   # 5  (buy at 1, sell at 6)
+max_profit([7, 6, 4, 3, 1])      # 0</pre>
+<solution>
+[[py:max_profit]]
+<p>Walk through the days once, remembering the lowest price seen so far. On each day ask: "if I sold today, having bought at the cheapest earlier day, what would I make?" Keep the best answer. Time O(n), space O(1). The brute force checks every buy/sell pair in O(n²).</p>
+</try>
+
+<try id="kadane" title="Maximum subarray (Kadane's algorithm)" must="1">
+<p>Find the largest sum of any contiguous part of a list that may contain negatives.</p>
+<pre class="plain">max_subarray([-2, 1, -3, 4, -1, 2, 1, -5, 4])   # 6  (the part [4, -1, 2, 1])
+max_subarray([-3, -1, -2])                        # -1</pre>
+<solution>
+[[py:kadane]]
+<p>At each number you have two choices: extend the running subarray, or start a new one at this number. If the running sum so far is negative, it only hurts, so starting fresh is better. <code>current</code> holds the best sum ending here, and <code>best</code> holds the best seen anywhere. Time O(n), space O(1).</p>
+<p>Start with <code>nums[0]</code>, not 0, so an all-negative list still returns the correct (negative) answer.</p>
+</try>
+
+<try id="window" title="Longest substring without repeating characters" must="1">
+<p>Return the length of the longest stretch of the string with no repeated character.</p>
+<pre class="plain">length_of_longest_substring("abcabcbb")   # 3  ("abc")
+length_of_longest_substring("bbbbb")         # 1
+length_of_longest_substring("pwwkew")         # 3  ("wke")</pre>
+<p>Hint: keep a window <code>[start, i]</code> with no repeats. When a repeat appears, slide the left edge past the earlier copy.</p>
+<solution>
+[[py:longest_substring]]
+<p>The dictionary remembers the last index of each character. When the current character was last seen <em>inside</em> the window (<code>last_seen[ch] &gt;= start</code>), move <code>start</code> just past that earlier copy. The window length is <code>i - start + 1</code>.</p>
+<p><b>The trap:</b> the <code>&gt;= start</code> check. In <code>"abba"</code>, when the final <code>a</code> arrives, its old position (0) is already <em>outside</em> the window, so you must not move <code>start</code> backwards. Try it by hand. Time O(n), space O(k) for k distinct characters.</p>
+</try>
+
+<try id="intervals" title="Merge intervals">
+<p>Merge all overlapping intervals.</p>
+<pre class="plain">merge_intervals([[1,3],[8,10],[2,6],[15,18]])   # [[1,6],[8,10],[15,18]]</pre>
+<solution>
+[[py:merge_intervals]]
+<p>Sort by start time. Then each interval either overlaps the last merged one (its start is at or before that one's end, so extend the end) or does not (start a new one). Sorting dominates: O(n log n). This "sort first, then sweep" pattern shows up constantly, for example with meeting rooms or transaction time windows.</p>
+</try>
+
+<try id="zeroes" title="Move zeroes to the end">
+<p>Move every <code>0</code> to the end of the list in place, keeping the order of the non-zero values.</p>
+<pre class="plain">move_zeroes([0, 1, 0, 3, 12])   # [1, 3, 12, 0, 0]</pre>
+<solution>
+[[py:move_zeroes]]
+<p>Two pointers: <code>read</code> scans every element, and <code>write</code> marks where the next non-zero value belongs. Swapping non-zero values forward pushes zeroes to the back. One pass, O(n) time, O(1) extra space.</p>
+</try>
+</mod>
+
+<mod id="m5" day="1" time="60 minutes" title="Linked lists">
+<p>A linked list is a chain of nodes. Each node holds a value and a pointer to the next node. Unlike an array, elements are not next to each other in memory.</p>
+<table>
+<tr><th></th><th>Array / list</th><th>Linked list</th></tr>
+<tr><td>Access the i-th item</td><td>O(1)</td><td>O(n), you must walk from the head</td></tr>
+<tr><td>Insert or delete at the front</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Insert or delete in the middle</td><td>O(n)</td><td>O(1) once you hold the node before it, but finding that node is O(n)</td></tr>
+<tr><td>Memory</td><td>Compact</td><td>Extra pointer per node</td></tr>
+</table>
+<p>Use this small setup for every exercise below. <code>from_list</code> and <code>to_list</code> are just helpers so you can test your code.</p>
+[[py:listnode]]
+
+<try id="sll" title="Build a singly linked list" must="1">
+<p>Write a <code>SinglyLinkedList</code> class using <code>ListNode</code>, with <code>append(val)</code>, <code>prepend(val)</code>, <code>delete(val)</code> (delete the first node with that value; return <code>True</code> if found) and <code>to_list()</code>.</p>
+<p>Think about the special cases before coding: empty list, deleting the head, deleting the last node, value not found.</p>
+<solution>
+[[py:sll]]
+<p><code>append</code> walks to the last node: O(n). <code>prepend</code> is O(1). <code>delete</code> keeps a pointer to the node <em>before</em> the one being removed, so it can skip over it with <code>curr.next = curr.next.next</code>. The head is a special case because it has no previous node.</p>
+</try>
+
+<try id="llalgos" title="Four classic linked-list functions" must="1">
+<p>Write each, using <code>ListNode</code> and the helpers above:</p>
+<ol>
+<li><code>reverse_list(head)</code>: reverse the list and return the new head.</li>
+<li><code>has_cycle(head)</code>: does the list loop back on itself?</li>
+<li><code>middle_node(head)</code>: return the middle node (the second of the two middles for even lengths).</li>
+<li><code>merge_two_lists(a, b)</code>: merge two sorted lists into one sorted list.</li>
+</ol>
+<p>Hint for 2 and 3: use two pointers moving at different speeds.</p>
+<solution>
+[[py:ll_algos]]
+<ul>
+<li><b>Reverse:</b> for each node, remember the rest, flip its pointer backwards, then step forward. Four lines you should be able to write on demand. O(n) time, O(1) space.</li>
+<li><b>Cycle (Floyd's tortoise and hare):</b> <code>slow</code> moves one step, <code>fast</code> two. If there is a loop, fast eventually laps slow and they meet. If there is no loop, fast reaches the end. O(n) time, O(1) space, versus O(n) space for a "visited" set.</li>
+<li><b>Middle:</b> when <code>fast</code> reaches the end, <code>slow</code> is halfway, since it moved half as far.</li>
+<li><b>Merge:</b> a dummy head node avoids special-casing the first node. Repeatedly attach the smaller front node. When one list runs out, attach the rest of the other. O(n + m).</li>
+</ul>
+</try>
+
+<qaset id="qa-ll" title="Linked list questions">
+<qa q="Array vs linked list: when do you pick each?">Pick an array when you need fast access by index or a compact memory layout. Pick a linked list when you insert and delete a lot at known positions (especially the front) and rarely index.</qa>
+<qa q="Singly vs doubly linked list?">A doubly linked list has a pointer back to the previous node as well. That allows walking in both directions and O(1) deletion of a node you hold, at the cost of more memory per node.</qa>
+<qa q="How do you find the start of a cycle?">After slow and fast meet, reset one pointer to the head. Move both one step at a time. They meet again at the node where the cycle begins.</qa>
+<qa q="How do you delete a node when you are only given that node (not the head)?">Copy the next node's value into this node, then link past the next node: <code>node.val = node.next.val; node.next = node.next.next</code>. It does not work for the last node.</qa>
+<qa q="How would you detect a palindrome linked list in O(1) extra space?">Find the middle with slow and fast pointers, reverse the second half, then compare the two halves node by node. Optionally reverse it back afterwards.</qa>
+</qaset>
+</mod>

@@ -1,0 +1,177 @@
+<mod id="m13" day="3" time="150 minutes" title="Timed mock round">
+<p>Now put it all together under time pressure. If your round is on Karat, candidates describe it as a live video interview with a shared code editor, roughly an hour long, often starting with a few technical questions before one or more coding problems. Even if your interview turns out to be a plain video call with HSBC engineers, this routine is exactly what they look for: a clear approach, working code, and testing.</p>
+
+<h3>The routine to use on every coding problem</h3>
+<ol>
+<li><b>Restate</b> the problem in your own words.</li>
+<li><b>Clarify</b> the inputs and edge cases: can the input be empty? Negative? Very large? Duplicates? Sorted?</li>
+<li><b>Give an example</b> and say what the answer should be.</li>
+<li><b>Brute force first.</b> Say the approach and its complexity, even if slow. Then say how you would improve it.</li>
+<li><b>Code it</b> in small, clearly named steps, talking as you write.</li>
+<li><b>Test by hand</b> on your example plus one edge case. Run the code if the editor allows it.</li>
+<li><b>State time and space complexity</b>, and mention what you would do with more time.</li>
+</ol>
+[[py:karat_skeleton]]
+<tip title="If you get stuck">
+<p>Do not go silent. Say what you know ("I know I need to remember earlier values, so a dictionary might help"), write the brute force, or ask a clarifying question. Interviewers usually give hints, and taking a hint well scores better than refusing one. If you finish early, volunteer edge cases and tests before they ask.</p>
+</tip>
+
+<h3>Your mock schedule (about 2.5 hours)</h3>
+<ol>
+<li><b>Rapid fundamentals (15 minutes).</b> Pick one question at random from each Q&amp;A set in OS, DBMS, SQL, networks and OOP. Answer each aloud in about 60 seconds, then check.</li>
+<li><b>Problem A, B and C (20 minutes each).</b> Set a timer. Use an editor with no autocomplete if you can. Talk out loud throughout, and use the routine above.</li>
+<li><b>Recall round (30 minutes).</b> Without looking, write from memory: the Queue class, <code>two_sum</code>, <code>reverse_list</code>, <code>binary_search</code>, and one SQL "second highest salary" query.</li>
+</ol>
+
+<try id="mockA" title="Problem A: first unique character" must="1">
+<p>Given a string, return the index of the first character that appears only once, or <code>-1</code> if there is none.</p>
+<pre class="plain">first_unique_index("leetcode")       # 0
+first_unique_index("loveleetcode")   # 2
+first_unique_index("aabb")           # -1</pre>
+<p>Set a 20-minute timer and use the routine.</p>
+<solution>
+[[py:mock_first_unique]]
+<p><b>Brute force:</b> for each character, scan the whole string to count it. O(n²). <b>Better:</b> count every character once with a <code>Counter</code>, then walk the string in the original order and return the first index whose count is 1. Time O(n), space O(1), because the alphabet is a fixed size (or O(k) for k distinct characters). The second pass over the original string, not over the counter, is what guarantees "first".</p>
+</try>
+
+<try id="mockB" title="Problem B: totals per account" must="1">
+<p>You get a list of <code>(account_id, amount)</code> transactions. Return the total per account as a list of <code>(account_id, total)</code> pairs, with the largest total first. If two accounts have equal totals, sort them by account id.</p>
+<pre class="plain">totals_by_account([("B", 50), ("A", 100), ("B", 70), ("C", 130), ("A", 20)])
+# [("C", 130), ("A", 120), ("B", 120)]</pre>
+<p>This type of "process a list of records" question is common in company-run rounds. Set a 20-minute timer.</p>
+<solution>
+[[py:mock_totals]]
+<p>Accumulate with a <code>defaultdict(int)</code>, so a missing account starts at 0. For the ordering, sort by a <b>tuple key</b>: <code>-total</code> puts the biggest first, and the account id breaks ties alphabetically. Time O(n + m log m) for n transactions and m accounts. Say out loud that you are assuming amounts are integers, and mention how you would handle refunds (negative amounts work as they are) or invalid rows (skip or raise).</p>
+</try>
+
+<try id="mockC" title="Problem C: who is still logged in?" must="1">
+<p>Given a chronological list of <code>(user, action)</code> events where action is <code>"login"</code> or <code>"logout"</code>, return the sorted list of users who are still logged in at the end. A logout with no earlier login should be ignored.</p>
+<pre class="plain">still_logged_in([("ravi","login"), ("asha","login"), ("ravi","logout"),
+                 ("meena","login"), ("zed","logout")])
+# ["asha", "meena"]</pre>
+<solution>
+[[py:mock_logged_in]]
+<p>A set is the natural tool: add on login, and remove on logout. <code>discard</code> (not <code>remove</code>) is the detail that handles the "logout without login" edge case, because <code>remove</code> would raise a <code>KeyError</code>. Time O(n + m log m) including the final sort, space O(m). A good follow-up to discuss: what if the same user can log in twice on different devices? Then you would count sessions per user with a dictionary instead of a set.</p>
+</try>
+
+<qaset id="qa-follow" title="Questions interviewers ask after you finish">
+<qa q="What is the time and space complexity?">State both, and justify them from the code: "one pass over n items with O(1) dictionary work per item, so O(n) time; the dictionary holds up to n keys, so O(n) space."</qa>
+<qa q="What edge cases did you consider?">Empty input, a single element, all elements the same, negative numbers, duplicates, and very large input. Mention the ones your code handles, and say which you assumed away.</qa>
+<qa q="How would you test this?">Give a normal case, an edge case (empty), a boundary case (one element), and a tricky case (repeats or ties). Say what result you expect before running each one. Mention unit tests with <code>assert</code> or <code>unittest</code>.</qa>
+<qa q="Can you do better?">If you used extra memory, describe the trade-off ("I can cut memory by sorting first, but then it costs O(n log n) time"). If the solution is already optimal, say why: "we must read every element at least once, so O(n) is the lower bound".</qa>
+<qa q="What if the input did not fit in memory?">Process it in chunks or as a stream, keeping only the state you need (for example running totals per account). For very large data, mention external sorting, or splitting the work across machines.</qa>
+</qaset>
+</mod>
+
+<mod id="m14" day="3" time="90 minutes" title="Projects and the HR round">
+<p>Your schedule has an HR round after the technical one. HSBC campus processes also include a values-based assessment, so how you talk about your experience matters as much as the code. This module gives you structures and examples to fill in with your own story.</p>
+
+<h3>Explaining your projects</h3>
+<p>Interviewers pick a project from your resume and dig in. You can be sure they will ask about at least one. Prepare each project using the same six parts.</p>
+<try id="project" title="Write a 90-second explanation of your best project" must="1">
+<p>Write your answer to "Tell me about your project", using these parts, in order:</p>
+<ol>
+<li><b>What it is</b> and who it is for (one sentence)</li>
+<li><b>The problem</b> it solves</li>
+<li><b>Your role</b> (what <em>you</em> built, not "we")</li>
+<li><b>The tech stack</b> and why you chose it</li>
+<li><b>One hard challenge</b> and how you solved it</li>
+<li><b>The result</b> and what you would improve</li>
+</ol>
+<p>Then list five follow-up questions an interviewer could ask about it (database design? how did you test it? what if 10,000 users use it at once?) and prepare a one-line answer to each.</p>
+<solution>
+<p>A filled-in example of the shape, for a made-up project:</p>
+<p>"I built a student attendance tracker for my department. Teachers were marking attendance on paper, which took ten minutes per class and caused errors in the monthly reports. I was the main developer on a team of three, and I built the backend and the database. I used Python with Flask and SQLite, because it is simple to set up and we had under a thousand students. The hardest part was that two teachers sometimes marked the same class at once and overwrote each other, so I added a unique constraint on class and date and handled the error by asking the second teacher to review. It cut the reporting time from hours to seconds. If I extended it, I would move to PostgreSQL and add login roles, since anyone can currently edit anything."</p>
+<p><b>Why this works:</b> it is specific (numbers, names of tools), it says "I", it shows a real problem, and it ends with honest improvements. Prepare the follow-ups too. For this example: "Why SQLite?", "What is your table design?", "How did you test it?", "What happens when 5,000 users log in?"</p>
+<p>If a project is weak or a team effort, still own your part in detail. Never claim technology you cannot explain. If you say "REST API", be ready to explain what that is.</p>
+</try>
+
+<h3>Tell me about yourself</h3>
+<try id="intro" title="Write your 60-second introduction" must="1">
+<p>Use the present, past, future structure. Write it, read it aloud with a timer, and cut it until it is 60 seconds.</p>
+<solution>
+<ul>
+<li><b>Present (15 sec):</b> who you are now. "I'm a final-year B.Tech student in [branch] at [college]."</li>
+<li><b>Past (30 sec):</b> two or three things that built your skills. A project, an internship, a competition, a subject you love. "I built [project], where I learned [skill]. I also [achievement]."</li>
+<li><b>Future (15 sec):</b> why this role. "I'm excited about this role because [reason connected to the job], and I'd like to grow in [area]."</li>
+</ul>
+<p>Do not read out your resume line by line, and do not go back to school days. Finish with a sentence that links to the role, so the interviewer knows where to ask next.</p>
+</try>
+
+<h3>Why HSBC?</h3>
+<p>A generic answer ("it is a big, reputed bank") is weak. Build a specific one from three places:</p>
+<ul>
+<li>HSBC's own <b>careers and "About us" pages</b>, and the summary of its most recent annual report. Note two or three things about its strategy that interest you.</li>
+<li>The <b>role and team</b> you applied for. What does that team do? What would you learn there?</li>
+<li>The <b>values</b>. HSBC has described its values as valuing difference, succeeding together, taking responsibility and getting it done. Check the current wording on its site, and prepare one real story for each, because the values assessment tests these behaviours.</li>
+</ul>
+
+<h3>Behavioural answers: the STAR method</h3>
+<p>For "tell me about a time when...", answer in four parts: <b>Situation</b> (the context, briefly), <b>Task</b> (what you were responsible for), <b>Action</b> (what <em>you</em> did, the longest part), <b>Result</b> (what happened, with a number if possible, and what you learned).</p>
+<table>
+<tr><th>Common question</th><th>What they are really testing</th></tr>
+<tr><td>A time you worked in a team and faced a conflict</td><td>Whether you can disagree respectfully and find a solution</td></tr>
+<tr><td>A time you failed or made a mistake</td><td>Honesty and whether you learn</td></tr>
+<tr><td>A time you worked under a tight deadline</td><td>Prioritising and staying calm</td></tr>
+<tr><td>A time you took the lead</td><td>Ownership, even without a title</td></tr>
+<tr><td>A time you learned something quickly</td><td>Adaptability</td></tr>
+<tr><td>A time you helped someone</td><td>Collaboration and empathy</td></tr>
+</table>
+<try id="star" title="Prepare two STAR stories" must="1">
+<p>Write two real stories in STAR format, one about teamwork and one about a mistake or failure. Each should be about 90 seconds spoken. Many questions can be answered by adjusting one of these two stories.</p>
+<solution>
+<p><b>Shape of a good failure story:</b></p>
+<p><b>Situation:</b> "In our third-year project, I owned the database part."</p>
+<p><b>Task:</b> "I had to finish it a week before the demo."</p>
+<p><b>Action:</b> "I skipped testing with real data, and two days before the demo the app crashed on long names. I told my team immediately instead of hiding it, stayed late to fix it, and wrote tests for the edge cases."</p>
+<p><b>Result:</b> "We demoed on time, and now I test with realistic data from day one. It taught me to raise problems early."</p>
+<p>The pattern to copy: a real (not fake-perfect) mistake, your own action, and a concrete lesson that changed your behaviour.</p>
+</try>
+
+<qaset id="qa-hr" title="HR round questions">
+<qa q="What are your strengths and weaknesses?">Pick two strengths that fit the role and back each with a brief example. For a weakness, choose a real but non-critical one and show what you are doing about it. For example: "I used to hesitate to ask for help, so I lost time. Now I give myself 30 minutes to try, then ask." Avoid fake weaknesses like "I work too hard".</qa>
+<qa q="Where do you see yourself in 5 years?">Say you want to become strong in your field, take on more responsibility, and contribute to bigger projects. It is fine to mention growing towards a lead role. Keep it connected to the company, and avoid saying you plan to leave or start your own business.</qa>
+<qa q="Why should we hire you?">Connect three things: skills that match the role (with an example), your attitude to learning fast, and your interest in the bank. Keep it confident and specific, not boastful.</qa>
+<qa q="Are you willing to relocate or work in shifts?">Answer honestly. If you are flexible, say so plainly. If you have a genuine constraint, say it calmly and briefly rather than agreeing to something you will not follow through on. Many bank technology and operations roles do involve some flexibility, so ask the recruiter about the actual role.</qa>
+<qa q="What do you do when you don't know the answer to a question?">Say so honestly, then show how you would work it out: "I haven't used that directly, but from what I know of X, I'd expect... and I would check the documentation to confirm." Guessing confidently and being wrong is worse than reasoning aloud.</qa>
+<qa q="Do you have any questions for us?">Always ask two. Good options: "What does a typical first year look like for someone in this role?", "What kind of training or mentoring do new joiners get?", "What is the team working on right now?". Do not ask about salary or leave in the first interview.</qa>
+</qaset>
+</mod>
+
+<mod id="m15" day="3" time="30 minutes" title="Checklist for the day before and the day itself">
+<p>Tick these off. Most interview stress comes from small things going wrong, so remove them now.</p>
+
+<div class="rules">
+<h3>Setup</h3>
+<p><label class="done"><input type="checkbox" data-done="chk-invite"><span>Found the joining link and platform in my invite email, and opened it once to check it works</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-device"><span>Laptop charged, charger next to me, camera and microphone tested, headphones ready</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-net"><span>Stable internet, with a phone hotspot as a backup</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-room"><span>Quiet room, plain background, front-facing light (a window or lamp in front of me, not behind)</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-docs"><span>Resume, photo ID and college ID ready, plus a pen and paper for rough work</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-dress"><span>Formal clothes laid out, and my slot time checked in IST</span></label></p>
+</div>
+
+<div class="rules">
+<h3>Things I can write from memory</h3>
+<p><label class="done"><input type="checkbox" data-done="chk-queue"><span>Queue and Stack classes</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-twosum"><span>Two sum with a dictionary</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-ll"><span>Reverse a linked list and detect a cycle</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-bs"><span>Binary search</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-sql"><span>Second highest salary, duplicates, a join with GROUP BY and HAVING</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-explain"><span>The four OOP pillars, ACID, deadlock conditions, and what happens when you type a URL</span></label></p>
+<p><label class="done"><input type="checkbox" data-done="chk-hr"><span>My 60-second introduction, one project explanation, and two STAR stories</span></label></p>
+</div>
+
+<div class="rules">
+<h3>In the interview</h3>
+<ol>
+<li>Log in 10 to 15 minutes early. Smile and greet, then take a breath before answering.</li>
+<li>Think aloud. A correct answer you cannot explain scores lower than a partly correct one with clear reasoning.</li>
+<li>If you do not know something, say so, then reason from what you do know.</li>
+<li>Ask for a repeat or a clarification. It is a strength, not a weakness.</li>
+<li>Keep going after a mistake. Interviewers notice how you recover.</li>
+<li>Before you finish, thank them and ask one good question.</li>
+</ol>
+</div>
+<p>You have covered the ground that campus interviews for technical roles typically test. Trust the preparation, and good luck.</p>
+</mod>

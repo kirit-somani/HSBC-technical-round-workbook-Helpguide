@@ -1,0 +1,211 @@
+<mod id="m9" day="2" time="90 minutes" title="DBMS theory">
+<p>SQL is the practical half of databases, and this module is the theory half: keys, normalization, transactions and indexes. Interviewers use these to check whether you understand <em>why</em> databases are designed the way they are.</p>
+
+<h3>Keys</h3>
+<table>
+<tr><th>Key</th><th>Meaning</th><th>Example in an employees table</th></tr>
+<tr><td>Super key</td><td>Any set of columns that identifies a row uniquely</td><td>(id), (id, name), (email)</td></tr>
+<tr><td>Candidate key</td><td>A minimal super key, with nothing to remove</td><td>id, email</td></tr>
+<tr><td>Primary key</td><td>The candidate key you chose as the main identifier. It is unique and never NULL</td><td>id</td></tr>
+<tr><td>Alternate key</td><td>A candidate key you did not choose</td><td>email</td></tr>
+<tr><td>Composite key</td><td>A key made of more than one column</td><td>(student_id, course_id) in an enrollment table</td></tr>
+<tr><td>Foreign key</td><td>A column that refers to the primary key of another table, enforcing referential integrity</td><td><code>department_id</code> refers to <code>departments.id</code></td></tr>
+</table>
+
+<h3>Normalization</h3>
+<p>Normalization organizes tables to remove redundancy, so a fact is stored in exactly one place. It prevents three problems: <b>update anomalies</b> (change a value in some rows but not others), <b>insert anomalies</b> (cannot add a fact without unrelated data) and <b>delete anomalies</b> (deleting a row loses unrelated facts).</p>
+<ul>
+<li><b>1NF:</b> every cell holds a single, atomic value, and there are no repeating groups.</li>
+<li><b>2NF:</b> 1NF, plus every non-key column depends on the <em>whole</em> composite key, not just part of it (no partial dependency).</li>
+<li><b>3NF:</b> 2NF, plus non-key columns depend only on the key, not on other non-key columns (no transitive dependency). A common phrase: "every non-key attribute depends on the key, the whole key, and nothing but the key."</li>
+<li><b>BCNF:</b> a stricter 3NF, where every determinant is a candidate key.</li>
+</ul>
+
+<try id="normalize" title="Normalize this table to 3NF" must="1">
+<p>This table stores course enrollments. The primary key is <code>(student_id, course_id)</code>. Assume each course has one instructor, and each instructor has one office.</p>
+<pre class="plain">student_id | course_id | student_name | course_name | instructor | instructor_office
+1          | C1        | Asha         | Databases   | Dr Rao     | Room 201
+1          | C2        | Asha         | Networks    | Dr Iyer    | Room 305
+2          | C1        | Ravi         | Databases   | Dr Rao     | Room 201</pre>
+<p>Find the partial and transitive dependencies, then split the table.</p>
+<solution>
+<p><b>Partial dependencies (violate 2NF):</b> <code>student_name</code> depends only on <code>student_id</code>, and <code>course_name</code> depends only on <code>course_id</code>. Asha's name is stored twice, so renaming her means editing several rows.</p>
+<p><b>Transitive dependency (violates 3NF):</b> <code>course_id → instructor → instructor_office</code>. The office depends on the instructor, who depends on the course, so the office is repeated for every enrollment in Dr Rao's course.</p>
+<p><b>Result in 3NF:</b></p>
+<pre class="plain">Student(student_id PK, student_name)
+Instructor(instructor_id PK, instructor_name, office)
+Course(course_id PK, course_name, instructor_id FK)
+Enrollment(student_id FK, course_id FK, PRIMARY KEY (student_id, course_id))</pre>
+<p>Each fact now lives in one place. Trade-off to mention: more tables means more joins when reading, so read-heavy systems sometimes <b>denormalize</b> on purpose for speed.</p>
+</try>
+
+<h3>Transactions and ACID</h3>
+<p>A <b>transaction</b> is a group of operations that must succeed or fail as one unit. The classic example is a transfer: money must not leave one account unless it arrives in the other.</p>
+[[sql:tx_transfer]]
+<table>
+<tr><th>Property</th><th>Guarantee</th><th>In the transfer example</th></tr>
+<tr><td>Atomicity</td><td>All operations happen, or none do</td><td>If the credit fails, the debit is rolled back</td></tr>
+<tr><td>Consistency</td><td>The database moves from one valid state to another, obeying its rules</td><td>The total money in both accounts is unchanged</td></tr>
+<tr><td>Isolation</td><td>Concurrent transactions do not see each other's half-finished work</td><td>Another transfer cannot read the balance between the two updates</td></tr>
+<tr><td>Durability</td><td>Once committed, the result survives crashes</td><td>After COMMIT, a power cut does not lose the transfer</td></tr>
+</table>
+
+<h3>Concurrency problems and isolation levels</h3>
+<ul>
+<li><b>Dirty read:</b> reading data another transaction has changed but not yet committed.</li>
+<li><b>Non-repeatable read:</b> reading the same row twice in one transaction and getting different values, because someone committed a change in between.</li>
+<li><b>Phantom read:</b> running the same query twice and getting extra rows, because someone inserted matching rows in between.</li>
+</ul>
+<p>Which level prevents which problem, as defined by the SQL standard (real databases vary slightly):</p>
+<table>
+<tr><th>Isolation level</th><th>Dirty read</th><th>Non-repeatable read</th><th>Phantom read</th></tr>
+<tr><td>Read uncommitted</td><td>Possible</td><td>Possible</td><td>Possible</td></tr>
+<tr><td>Read committed</td><td>Prevented</td><td>Possible</td><td>Possible</td></tr>
+<tr><td>Repeatable read</td><td>Prevented</td><td>Prevented</td><td>Possible</td></tr>
+<tr><td>Serializable</td><td>Prevented</td><td>Prevented</td><td>Prevented</td></tr>
+</table>
+<p>Higher isolation is safer but slower, because transactions wait for each other more.</p>
+
+<h3>Indexes</h3>
+[[sql:index_example]]
+<p>An index is like the index at the back of a book: instead of reading every page, you look up the term and jump to the page. Most databases use a <b>B+ tree</b>, keeping lookups at O(log n). Index the columns you filter, join or sort on often. Do not index everything: each index uses space and slows down writes. A <b>clustered</b> index decides how the rows are physically stored (one per table, often the primary key), while a <b>non-clustered</b> index is a separate structure that points to the rows.</p>
+
+<qaset id="qa-dbms" title="DBMS questions">
+<qa q="DBMS vs RDBMS?">A DBMS is any software that stores and manages data. An RDBMS stores data in related tables (rows and columns) with keys and relationships, and uses SQL. Examples are MySQL, PostgreSQL, Oracle and SQL Server.</qa>
+<qa q="Why do we normalize, and why might we denormalize?">We normalize to remove redundancy and avoid update, insert and delete anomalies. We denormalize when reads must be fast and joins are too expensive, accepting duplicated data and more careful updates.</qa>
+<qa q="What are DDL, DML, DCL and TCL?">DDL defines structure (CREATE, ALTER, DROP). DML manipulates data (INSERT, UPDATE, DELETE, SELECT). DCL controls access (GRANT, REVOKE). TCL controls transactions (COMMIT, ROLLBACK, SAVEPOINT).</qa>
+<qa q="SQL vs NoSQL?">SQL databases have fixed schemas, tables and strong ACID guarantees, which suits banking and other structured data. NoSQL databases (document, key-value, column, graph) offer flexible schemas and easier horizontal scaling, often trading away some consistency guarantees.</qa>
+<qa q="What is a foreign key and what does it enforce?">A column that refers to another table's primary key. It enforces referential integrity: you cannot add an employee with a department that does not exist, and you cannot delete a department that is still referenced (unless the rule cascades).</qa>
+<qa q="What is a deadlock in a database?">Two transactions each hold a lock the other needs, so both wait forever. The database detects the cycle and aborts one of them (the victim), which the application can retry.</qa>
+<qa q="What is a stored procedure?">A named block of SQL kept inside the database that can take parameters and be called by applications. It reduces network round trips and keeps business logic close to the data.</qa>
+<qa q="What is an ER diagram?">An Entity-Relationship diagram is a picture of the entities in a system (like Customer, Account), their attributes, and the relationships between them (one-to-one, one-to-many, many-to-many). It is used to design tables before writing them.</qa>
+</qaset>
+</mod>
+
+<mod id="m10" day="2" time="120 minutes" title="Operating systems">
+<p>An operating system manages hardware for programs: it shares the CPU between processes, hands out memory, and gives programs a clean way to use disks and networks. Programs ask the kernel for these services through <b>system calls</b>. The CPU runs in <b>user mode</b> for applications and <b>kernel mode</b> for trusted OS code, so one buggy program cannot damage the whole machine.</p>
+
+<h3>Process vs thread</h3>
+<table>
+<tr><th></th><th>Process</th><th>Thread</th></tr>
+<tr><td>What it is</td><td>A running program with its own memory</td><td>A unit of execution inside a process</td></tr>
+<tr><td>Memory</td><td>Separate address space</td><td>Shares the process's memory with sibling threads</td></tr>
+<tr><td>Creation and switching cost</td><td>Heavier</td><td>Lighter</td></tr>
+<tr><td>Communication</td><td>Needs IPC (pipes, sockets, shared memory)</td><td>Can share variables directly, but needs locking</td></tr>
+<tr><td>Failure</td><td>One process crashing does not usually affect others</td><td>One thread crashing can bring down the whole process</td></tr>
+</table>
+
+<h3>Process states</h3>
+<table>
+<tr><th>Transition</th><th>Why it happens</th></tr>
+<tr><td>New to Ready</td><td>The process is created and admitted</td></tr>
+<tr><td>Ready to Running</td><td>The scheduler picks it for the CPU</td></tr>
+<tr><td>Running to Ready</td><td>Its time slice ended, or a higher-priority process arrived (preemption)</td></tr>
+<tr><td>Running to Waiting</td><td>It needs I/O or some event, so it gives up the CPU</td></tr>
+<tr><td>Waiting to Ready</td><td>The I/O finished</td></tr>
+<tr><td>Running to Terminated</td><td>It finished or was killed</td></tr>
+</table>
+<p>A <b>context switch</b> is when the CPU saves one process's state and loads another's. It is pure overhead, since no useful work happens during it.</p>
+
+<h3>CPU scheduling</h3>
+<ul>
+<li><b>FCFS</b> (first come, first served): simple, but a long job at the front delays everyone (the convoy effect).</li>
+<li><b>SJF</b> (shortest job first): gives the lowest average waiting time, but needs to know burst times and can starve long jobs.</li>
+<li><b>Round robin:</b> each process gets a fixed time quantum in turn. Fair and good for responsiveness. Too small a quantum wastes time on switches.</li>
+<li><b>Priority:</b> the highest priority runs first. Low-priority processes can starve, which is fixed by <b>aging</b> (slowly raising the priority of waiting processes).</li>
+</ul>
+<p>Formulas: <b>turnaround time = completion time − arrival time</b>, and <b>waiting time = turnaround time − burst time</b>.</p>
+
+<try id="sched" title="Scheduling calculation" must="1">
+<p>Three processes all arrive at time 0: P1 needs 5 units of CPU (its burst time), P2 needs 3, and P3 needs 8. Calculate the <b>average waiting time</b> for:</p>
+<ol>
+<li>FCFS, in the order P1, P2, P3</li>
+<li>SJF (non-preemptive)</li>
+<li>Round robin with a time quantum of 4</li>
+</ol>
+<p>Draw the Gantt chart for each first.</p>
+<solution>
+<pre class="plain">FCFS:  | P1 0-5 | P2 5-8 | P3 8-16 |
+SJF:   | P2 0-3 | P1 3-8 | P3 8-16 |
+RR q4: | P1 0-4 | P2 4-7 | P3 7-11 | P1 11-12 | P3 12-16 |</pre>
+<table>
+<tr><th>Algorithm</th><th>Waiting times</th><th>Average</th></tr>
+<tr><td>FCFS</td><td>P1 = 0, P2 = 5, P3 = 8</td><td>13 / 3 = <b>4.33</b></td></tr>
+<tr><td>SJF</td><td>P2 = 0, P1 = 3, P3 = 8</td><td>11 / 3 = <b>3.67</b></td></tr>
+<tr><td>Round robin (q = 4)</td><td>P1 = 12 − 5 = 7, P2 = 7 − 3 = 4, P3 = 16 − 8 = 8</td><td>19 / 3 = <b>6.33</b></td></tr>
+</table>
+<p>For round robin, P1 runs 0 to 4 and has 1 unit left, so it rejoins the queue. P2 finishes at 7. P3 runs 7 to 11 and has 4 left. P1 finishes at 12, then P3 finishes at 16. Since everyone arrives at 0, waiting = completion − burst.</p>
+<p><b>What to conclude:</b> SJF gave the lowest average waiting time, which is a known result. Round robin had the highest average here, but it gives every process the CPU early, so it has the best response time.</p>
+</try>
+
+<h3>Deadlock</h3>
+<p>A deadlock is a set of processes that each wait for a resource another holds, so none can ever proceed. Example: thread A holds lock 1 and wants lock 2, while thread B holds lock 2 and wants lock 1. Deadlock needs <b>all four</b> conditions (the Coffman conditions):</p>
+<ol>
+<li><b>Mutual exclusion:</b> a resource can be used by only one process at a time.</li>
+<li><b>Hold and wait:</b> a process holds one resource while waiting for another.</li>
+<li><b>No preemption:</b> a resource cannot be forcibly taken away.</li>
+<li><b>Circular wait:</b> a cycle of processes, each waiting for the next.</li>
+</ol>
+<p><b>Prevention</b> means breaking one condition, for example by making every thread acquire locks in the same fixed order (breaks circular wait). <b>Avoidance</b> uses the Banker's algorithm to grant a request only if the system stays in a safe state. <b>Detection and recovery</b> finds the cycle and kills or rolls back a process.</p>
+
+<h3>Synchronization</h3>
+<p>A <b>race condition</b> happens when the result depends on the timing of threads touching shared data. The code that touches shared data is a <b>critical section</b>, and it must run one thread at a time. A <b>mutex</b> is the lock that provides this.</p>
+
+<try id="lock" title="Protect a shared counter with a lock">
+<p>Four threads each add 1 to a shared counter 100,000 times. Write the code so the final answer is always 400,000.</p>
+<solution>
+[[py:os_lock]]
+<p><code>counter += 1</code> looks like one step but is really read, add, write. Two threads can read the same old value, and one increment gets lost. The <code>with lock:</code> block makes that sequence run one thread at a time. In CPython the bug may not show up every run because of the GIL, but the operation is still not atomic, so the lock is required for correct code.</p>
+</try>
+<table>
+<tr><th></th><th>Mutex</th><th>Semaphore</th></tr>
+<tr><td>Idea</td><td>A lock with an owner: one thread in, and the same thread must release it</td><td>A counter of available permits: up to N threads may enter</td></tr>
+<tr><td>Values</td><td>Locked or unlocked</td><td>Any integer from 0 up to N</td></tr>
+<tr><td>Typical use</td><td>Protect one shared resource</td><td>Limit access to a pool of N resources, or signal between threads</td></tr>
+</table>
+
+<h3>Memory management</h3>
+<ul>
+<li><b>Paging</b> splits memory into fixed-size <em>pages</em> (in the process) and <em>frames</em> (in RAM). There is no external fragmentation, but the last page of a process can waste space (internal fragmentation).</li>
+<li><b>Segmentation</b> splits memory into variable-size logical pieces (code, stack, heap). It matches how programmers think but suffers from external fragmentation.</li>
+<li><b>Virtual memory</b> lets a process use more memory than physically exists, by keeping only the needed pages in RAM and the rest on disk.</li>
+<li>A <b>page fault</b> happens when a needed page is not in RAM, so the OS loads it from disk (slow). <b>Thrashing</b> is when the system spends more time swapping pages than doing work, because too many processes compete for too little RAM.</li>
+</ul>
+
+<try id="pagefault" title="Count page faults: FIFO vs LRU" must="1">
+<p>A process uses 3 frames of memory and requests these pages in order: <code>7, 0, 1, 2, 0, 3, 0, 4</code>. Count the page faults under:</p>
+<ol>
+<li><b>FIFO</b>: replace the page that has been in memory the longest</li>
+<li><b>LRU</b>: replace the page that was used least recently</li>
+</ol>
+<solution>
+<p>Frames after each request (F means a page fault, hit means it was already in memory). FIFO lists the oldest page first. LRU lists the least recently used first.</p>
+<table>
+<tr><th>Request</th><th>FIFO frames</th><th>FIFO</th><th>LRU frames</th><th>LRU</th></tr>
+<tr><td>7</td><td>7</td><td>F</td><td>7</td><td>F</td></tr>
+<tr><td>0</td><td>7, 0</td><td>F</td><td>7, 0</td><td>F</td></tr>
+<tr><td>1</td><td>7, 0, 1</td><td>F</td><td>7, 0, 1</td><td>F</td></tr>
+<tr><td>2</td><td>0, 1, 2</td><td>F</td><td>0, 1, 2</td><td>F</td></tr>
+<tr><td>0</td><td>0, 1, 2</td><td>hit</td><td>1, 2, 0</td><td>hit</td></tr>
+<tr><td>3</td><td>1, 2, 3</td><td>F</td><td>2, 0, 3</td><td>F</td></tr>
+<tr><td>0</td><td>2, 3, 0</td><td>F</td><td>2, 3, 0</td><td>hit</td></tr>
+<tr><td>4</td><td>3, 0, 4</td><td>F</td><td>3, 0, 4</td><td>F</td></tr>
+</table>
+<p><b>FIFO: 7 faults. LRU: 6 faults.</b> The difference appears when page 3 arrives: FIFO throws out page 0 because it is the oldest, even though it was used a moment ago, and then faults on 0 again at the next request. LRU keeps page 0 and evicts page 1 instead. LRU works well because recently used pages are likely to be used again (locality). Mention <b>Belady's anomaly</b>: with FIFO, giving a process <em>more</em> frames can sometimes cause <em>more</em> faults. LRU does not have this problem.</p>
+</try>
+
+<qaset id="qa-os" title="Operating system questions" >
+<qa q="Process vs thread?">A process is a running program with its own address space. A thread is a lighter unit of execution inside a process that shares the process's memory with its sibling threads. Threads are cheaper to create and switch, but sharing memory requires careful synchronization.</qa>
+<qa q="What is a context switch and why is it costly?">Saving the state of the running process (registers, program counter) and loading the state of another. No useful work happens during the switch, and the CPU caches also become less useful. Too many switches hurt performance.</qa>
+<qa q="What are the four conditions for deadlock?">Mutual exclusion, hold and wait, no preemption, and circular wait. All four must hold together. Breaking any one prevents deadlock.</qa>
+<qa q="Deadlock vs starvation?">In a deadlock, a group of processes wait on each other forever. In starvation, one process waits indefinitely because others keep getting priority, but the system as a whole keeps moving. Aging is a common fix for starvation.</qa>
+<qa q="Mutex vs semaphore?">A mutex is a lock owned by one thread at a time, used for mutual exclusion. A semaphore is a counter allowing up to N holders and can also be used for signalling between threads. A binary semaphore looks like a mutex but has no ownership.</qa>
+<qa q="Paging vs segmentation?">Paging uses fixed-size blocks, avoids external fragmentation, and is invisible to the programmer. Segmentation uses variable-size blocks that match logical units like code and stack, and can suffer external fragmentation.</qa>
+<qa q="What is virtual memory?">A technique that gives each process a large, private address space by mapping it to physical RAM and disk. Only the pages in use sit in RAM. It lets programs exceed physical memory and isolates processes from each other.</qa>
+<qa q="What is thrashing?">When the system spends most of its time swapping pages between RAM and disk instead of executing, usually because too many processes are running for the available memory. The fix is to reduce the number of active processes or add memory.</qa>
+<qa q="Preemptive vs non-preemptive scheduling?">In preemptive scheduling the OS can take the CPU away from a running process (time slice ends, or a higher priority process arrives). In non-preemptive scheduling, a process keeps the CPU until it finishes or blocks.</qa>
+<qa q="Internal vs external fragmentation?">Internal: wasted space inside an allocated block (a process gets a bigger block than it needs). External: enough total free memory exists, but it is split into pieces too small to use.</qa>
+<qa q="What are zombie and orphan processes?">A zombie has finished, but its parent has not yet read its exit status, so its entry stays in the process table. An orphan is a running process whose parent has terminated, and it is adopted by the init process.</qa>
+<qa q="What is a system call?">The interface through which a user program asks the kernel to do something privileged, like reading a file or creating a process. The program switches from user mode to kernel mode for the duration of the call.</qa>
+</qaset>
+</mod>

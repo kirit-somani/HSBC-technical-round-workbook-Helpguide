@@ -1,0 +1,130 @@
+<mod id="m11" day="3" time="90 minutes" title="Computer networks">
+<p>Networks questions are mostly explanations, so your aim is to give clear, structured answers. Learn the layers first, because most other answers hang off them.</p>
+
+<h3>The layers</h3>
+<table>
+<tr><th>OSI layer</th><th>TCP/IP layer</th><th>What it does</th><th>Examples</th><th>Data unit</th></tr>
+<tr><td>7 Application</td><td rowspan="3">Application</td><td>Services the user's program talks to</td><td>HTTP, HTTPS, DNS, SMTP, FTP</td><td>Data</td></tr>
+<tr><td>6 Presentation</td><td>Format, encryption, compression</td><td>TLS, JSON encoding</td><td>Data</td></tr>
+<tr><td>5 Session</td><td>Starts and manages conversations</td><td>Sessions, sockets</td><td>Data</td></tr>
+<tr><td>4 Transport</td><td>Transport</td><td>End-to-end delivery between programs (ports)</td><td>TCP, UDP</td><td>Segment or datagram</td></tr>
+<tr><td>3 Network</td><td>Internet</td><td>Addressing and routing across networks</td><td>IP, ICMP, routers</td><td>Packet</td></tr>
+<tr><td>2 Data link</td><td rowspan="2">Network access</td><td>Delivery on the local network, using MAC addresses</td><td>Ethernet, Wi-Fi, switches</td><td>Frame</td></tr>
+<tr><td>1 Physical</td><td>Raw bits over cables or radio</td><td>Cables, hubs</td><td>Bits</td></tr>
+</table>
+<p>Mnemonic for layers 1 to 7: <b>P</b>lease <b>D</b>o <b>N</b>ot <b>T</b>hrow <b>S</b>ausage <b>P</b>izza <b>A</b>way.</p>
+
+<h3>TCP vs UDP</h3>
+<table>
+<tr><th></th><th>TCP</th><th>UDP</th></tr>
+<tr><td>Connection</td><td>Connection-oriented (three-way handshake first)</td><td>Connectionless</td></tr>
+<tr><td>Reliability</td><td>Guaranteed delivery, in order, with retransmission</td><td>No guarantees. Packets may be lost or arrive out of order</td></tr>
+<tr><td>Speed</td><td>Slower, more overhead</td><td>Faster, less overhead</td></tr>
+<tr><td>Used for</td><td>Web pages, email, file transfer, banking</td><td>Video calls, live streaming, gaming, DNS lookups</td></tr>
+</table>
+<p>The <b>three-way handshake</b>: the client sends <code>SYN</code>, the server replies <code>SYN-ACK</code>, and the client answers <code>ACK</code>. Then data flows.</p>
+
+<try id="url" title="What happens when you type a URL in the browser?" must="1">
+<p>This is one of the most common networks questions. Before you open the solution, write out your answer as numbered steps, in order. Try for 7 or 8 steps.</p>
+<solution>
+<ol>
+<li><b>Parse the URL</b> into protocol (https), host (example.com) and path.</li>
+<li><b>Check caches</b> for a stored copy of the page or of the IP address.</li>
+<li><b>DNS lookup</b> to turn the name into an IP address: browser cache, then the OS, then your ISP's recursive resolver, which asks the root servers, then the TLD servers (.com), then the domain's authoritative server.</li>
+<li><b>TCP connection</b> to that IP on port 443, using the three-way handshake.</li>
+<li><b>TLS handshake</b> for HTTPS: the server presents its certificate, the browser verifies it, and both sides agree on encryption keys.</li>
+<li><b>HTTP request</b>: the browser sends <code>GET /path</code> with headers such as cookies.</li>
+<li><b>Server processing:</b> a load balancer routes the request to an application server, which may query a database, and returns a response with a status code (200) and the HTML.</li>
+<li><b>Rendering:</b> the browser parses the HTML, fetches the CSS, JavaScript and images it references (more requests), builds the page and displays it.</li>
+</ol>
+<p>Even if you only remember the big five (DNS, TCP, TLS, HTTP request and response, rendering), say them in order and you will score well.</p>
+</try>
+
+<try id="subnet" title="IP addressing quick calculations">
+<p>An IPv4 address has 32 bits. A prefix such as <code>/24</code> says how many of those bits identify the network, and the rest identify hosts. Work out:</p>
+<ol>
+<li>How many <em>usable</em> host addresses are in a <code>/24</code> network? A <code>/26</code>? A <code>/30</code>?</li>
+<li>Is <code>172.20.5.9</code> a private or public address?</li>
+</ol>
+<p>Hint: two addresses in every network are reserved (the network address and the broadcast address).</p>
+<solution>
+<p><b>1.</b> Host bits = 32 − prefix, total addresses = 2<sup>host bits</sup>, usable = total − 2.</p>
+<table>
+<tr><th>Prefix</th><th>Host bits</th><th>Total</th><th>Usable</th></tr>
+<tr><td>/24</td><td>8</td><td>256</td><td><b>254</b></td></tr>
+<tr><td>/26</td><td>6</td><td>64</td><td><b>62</b></td></tr>
+<tr><td>/30</td><td>2</td><td>4</td><td><b>2</b></td></tr>
+</table>
+<p><b>2.</b> The private ranges are <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code> (172.16.x.x to 172.31.x.x) and <code>192.168.0.0/16</code>. 172.20.5.9 falls between 172.16 and 172.31, so it is <b>private</b>. Private addresses are not routable on the internet, and NAT lets many devices share one public address.</p>
+</try>
+
+<h3>HTTP quick reference</h3>
+<table>
+<tr><th>Status code</th><th>Meaning</th></tr>
+<tr><td>200 OK</td><td>Success</td></tr>
+<tr><td>201 Created</td><td>A new resource was created (typical after POST)</td></tr>
+<tr><td>301 / 302</td><td>Moved permanently / temporarily (redirect)</td></tr>
+<tr><td>400 Bad Request</td><td>The request itself is malformed</td></tr>
+<tr><td>401 Unauthorized</td><td>You are not authenticated (log in first)</td></tr>
+<tr><td>403 Forbidden</td><td>You are logged in but not allowed</td></tr>
+<tr><td>404 Not Found</td><td>No such resource</td></tr>
+<tr><td>500 Internal Server Error</td><td>The server failed</td></tr>
+<tr><td>503 Service Unavailable</td><td>The server is overloaded or down</td></tr>
+</table>
+<p>The first digit gives the family: 2xx success, 3xx redirect, 4xx client error, 5xx server error.</p>
+
+<qaset id="qa-net" title="Networks questions">
+<qa q="OSI model vs TCP/IP model?">OSI is a 7-layer reference model that is used to teach and to describe problems ("it's a layer 3 issue"). TCP/IP is the 4-layer model the internet actually runs on. TCP/IP merges OSI's top three layers into Application and its bottom two into Network access.</qa>
+<qa q="HTTP vs HTTPS?">HTTPS is HTTP running over TLS. TLS encrypts the traffic, so eavesdroppers cannot read it, and it verifies the server's identity with a certificate, and detects tampering. Banking sites must use it.</qa>
+<qa q="What does DNS do?">The Domain Name System translates human-friendly names (example.com) into IP addresses. It is a distributed, hierarchical database, and answers are cached at many levels to make lookups fast.</qa>
+<qa q="IP address vs MAC address?">An IP address is a logical address assigned to a device on a network, and it can change when you move networks. A MAC address is a hardware address burned into the network card, used for delivery within the local network. IP is for routing across networks, MAC for the last hop.</qa>
+<qa q="Hub vs switch vs router?">A hub repeats every signal to every port (layer 1, no intelligence). A switch learns MAC addresses and sends frames only to the right port (layer 2). A router connects different networks and forwards packets using IP addresses (layer 3).</qa>
+<qa q="What is ARP?">The Address Resolution Protocol finds the MAC address that belongs to a known IP address on the local network. A device broadcasts "who has this IP?" and the owner replies with its MAC.</qa>
+<qa q="What does DHCP do?">It automatically gives devices an IP address, subnet mask, gateway and DNS server when they join a network, so nobody has to configure each device by hand.</qa>
+<qa q="What is NAT?">Network Address Translation lets many devices on a private network share one public IP address. The router rewrites addresses and ports on the way out and keeps a table so replies go back to the right device.</qa>
+<qa q="IPv4 vs IPv6?">IPv4 has 32-bit addresses, giving about 4.3 billion, which have run out. IPv6 has 128-bit addresses, providing a practically unlimited supply, and is written in hexadecimal.</qa>
+<qa q="What is a port?">A number (0 to 65535) that identifies a specific service on a machine, so one IP address can serve many programs. Examples: 80 for HTTP, 443 for HTTPS, 22 for SSH, 53 for DNS.</qa>
+<qa q="GET vs POST?">GET asks for data, puts parameters in the URL, and should not change anything on the server (it is safe and idempotent). POST sends data in the request body to create or change something, and repeating it can have side effects.</qa>
+<qa q="What is a firewall?">A security system that allows or blocks network traffic according to rules, such as source, destination, port and protocol. It sits between a trusted network and an untrusted one.</qa>
+<qa q="Latency vs bandwidth?">Latency is how long one piece of data takes to travel (a delay, measured in milliseconds). Bandwidth is how much data can be sent per second. A satellite link can have high bandwidth but high latency.</qa>
+</qaset>
+</mod>
+
+<mod id="m12" day="3" time="45 minutes" title="Cloud, APIs and security basics">
+<p>You will not be grilled on these as deeply as on the core subjects, but a bank cares about them, and one or two questions are likely. Short, correct answers are enough.</p>
+
+<h3>Cloud service models</h3>
+<table>
+<tr><th>Model</th><th>You manage</th><th>Provider manages</th><th>Example</th></tr>
+<tr><td>IaaS (infrastructure)</td><td>OS, runtime, apps, data</td><td>Servers, storage, networking</td><td>A virtual machine on AWS EC2 or Azure VMs</td></tr>
+<tr><td>PaaS (platform)</td><td>Your app and data</td><td>Servers, OS, runtime</td><td>Azure App Service, Google App Engine</td></tr>
+<tr><td>SaaS (software)</td><td>Just your use of it</td><td>Everything</td><td>Gmail, Microsoft 365</td></tr>
+</table>
+<p>The deployment types are <b>public</b> (shared provider infrastructure), <b>private</b> (dedicated to one organization) and <b>hybrid</b> (both). Banks often use hybrid setups because of regulation and data-residency rules.</p>
+
+<h3>APIs and REST</h3>
+<p>An API is a contract that lets one program use another. A <b>REST</b> API exposes resources as URLs (such as <code>/accounts/42</code>) and uses HTTP methods on them: <code>GET</code> to read, <code>POST</code> to create, <code>PUT</code> or <code>PATCH</code> to update, <code>DELETE</code> to remove. It is <b>stateless</b>, meaning each request carries everything the server needs, and usually returns JSON. An operation is <b>idempotent</b> if repeating it has the same effect as doing it once. GET, PUT and DELETE are idempotent, but POST is not.</p>
+
+<h3>Security you should be able to explain</h3>
+<p><b>SQL injection</b> is the classic attack, and it connects directly to your SQL work. If you build a query by gluing user input into the SQL text, an attacker can change what the query means. The fix is parameterized queries.</p>
+<try id="sqlinj" title="See SQL injection happen, then fix it">
+<p>Using your practice database, the input <code>x' OR '1'='1</code> is typed into a "search by name" box. Write an unsafe version that returns every employee, then a safe version that returns nothing.</p>
+<solution>
+[[py:sql_injection]]
+<p>In the unsafe query, the attacker's quote closes the string early and <code>OR '1'='1'</code> is always true, so the filter disappears. With a <code>?</code> placeholder, the driver sends the input to the database separately from the SQL, so it is only ever treated as a value to compare, never as code. This is the standard defence, and it is worth saying "parameterized queries" out loud in the interview.</p>
+</try>
+
+<qaset id="qa-misc" title="Cloud, security and process questions">
+<qa q="Explain IaaS, PaaS and SaaS with examples.">IaaS gives raw infrastructure like virtual machines (AWS EC2). PaaS gives a platform to run your code without managing servers (Azure App Service). SaaS is a finished application you just use (Gmail). Moving from IaaS to SaaS, you manage less and the provider manages more.</qa>
+<qa q="Vertical vs horizontal scaling?">Vertical scaling means making one machine bigger (more CPU, RAM). Horizontal scaling means adding more machines and spreading the load. Horizontal scaling has no hard ceiling and adds resilience, but the application must be designed for it.</qa>
+<qa q="Virtual machine vs container?">A VM includes a full guest operating system on virtualized hardware, so it is heavy and slow to start. A container shares the host's OS kernel and packages only the app and its dependencies, so it is light and starts in seconds. Docker is the common tool.</qa>
+<qa q="Authentication vs authorization?">Authentication answers "who are you?" (a password, an OTP, a fingerprint). Authorization answers "what are you allowed to do?" (a customer can see their own account, a teller can see more). Authentication comes first.</qa>
+<qa q="Hashing vs encryption?">Encryption is reversible: with the key you can recover the original data. Hashing is one-way: you cannot get the original back. Passwords should be stored as salted hashes, never in plain text or reversibly encrypted.</qa>
+<qa q="Symmetric vs asymmetric encryption?">Symmetric uses one shared key for both encrypting and decrypting. It is fast, but the key must be shared securely. Asymmetric uses a public and private key pair, so anyone can encrypt with the public key but only the owner can decrypt. HTTPS uses asymmetric to agree on a symmetric key, then uses that for the bulk data.</qa>
+<qa q="What is Git and what are branches for?">Git is a version control system that records the history of code changes. A branch is an independent line of work, so you can build a feature without disturbing the main code, then merge it back, usually through a pull request that a teammate reviews.</qa>
+<qa q="Agile vs waterfall?">Waterfall completes each phase (requirements, design, build, test, release) in strict order, which suits fixed, well-understood requirements. Agile builds in short iterations (sprints), delivering working software often and adapting to feedback. Most banks' technology teams now use Agile.</qa>
+<qa q="Unit vs integration testing?">Unit tests check one small piece of code in isolation, such as a single function. Integration tests check that several pieces work correctly together, such as your code and a database. Both are automated, and there are many more unit tests than integration tests.</qa>
+<qa q="What is CI/CD?">Continuous integration automatically builds and tests code whenever someone commits, catching breakage early. Continuous delivery or deployment automatically prepares or releases that tested code, making releases small, frequent and low-risk.</qa>
+</qaset>
+</mod>
+

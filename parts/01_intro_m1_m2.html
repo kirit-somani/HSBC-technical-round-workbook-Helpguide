@@ -1,0 +1,184 @@
+<div class="intro" id="top">
+<h1>Your 3-day path to the HSBC technical round</h1>
+<p class="lead">This is a workbook, not a reading list. Each topic has a short lesson, exercises to try before you see the answer, and interview questions to say out loud. Everything is in Python, and every code solution on this page was run and tested.</p>
+<p>Candidates who interviewed for HSBC technical roles in India report questions on core subjects (OS, DBMS, SQL, networks), coding a data structure such as a queue from scratch, and detailed discussion of their projects. The exact format and platform depend on your drive, so confirm those in your invite. The skills below are the same either way.</p>
+
+<div class="plan">
+  <div class="day">
+    <h3>Day 1</h3>
+    <p class="theme">Coding and OOP, about 9 hours</p>
+    <ul>
+      <li><b>Morning</b>Python toolkit, stack and queue, hashmaps (Modules {n:m1} to {n:m3})</li>
+      <li><b>Afternoon</b>Arrays and strings, linked lists (Modules {n:m4} and {n:m5})</li>
+      <li><b>Evening</b>Binary search, sorting, trees, then OOP (Modules {n:m6} and {n:m7})</li>
+    </ul>
+  </div>
+  <div class="day">
+    <h3>Day 2</h3>
+    <p class="theme">More DSA plus core subjects, about 9 hours</p>
+    <ul>
+      <li><b>Morning</b>More DSA problems with solutions (Module {n:m16})</li>
+      <li><b>Afternoon</b>SQL, then DBMS theory (Modules {n:m8} and {n:m9})</li>
+      <li><b>Evening</b>Operating systems, with worked scheduling examples (Module {n:m10})</li>
+    </ul>
+  </div>
+  <div class="day">
+    <h3>Day 3</h3>
+    <p class="theme">Networks, your resume, mock, HR, the evening before</p>
+    <ul>
+      <li><b>Morning</b>Networks, then cloud, APIs and security (Modules {n:m11} and {n:m12})</li>
+      <li><b>Midday</b>Questions from your own resume (Module {n:m17})</li>
+      <li><b>Afternoon</b>Timed Karat-style mock round (Module {n:m13})</li>
+      <li><b>Evening</b>HR answers, then the checklist. Sleep early (Modules {n:m14} and {n:m15})</li>
+    </ul>
+  </div>
+</div>
+
+<div class="rules">
+  <h3>How to work through it</h3>
+  <ol>
+    <li><b>Type every solution yourself</b> in an editor or an online Python editor. Copy-pasting teaches you nothing.</li>
+    <li><b>The 20-minute rule.</b> Try each exercise for 20 minutes before opening the solution. If you are stuck, read only the approach, close it, and try again.</li>
+    <li><b>Talk while you code.</b> Explaining your thinking out loud is scored in a live interview, so practise it now.</li>
+    <li><b>Short on time?</b> Do the exercises marked <span class="badge">Priority</span> first.</li>
+    <li>Tick <b>Mark as done</b> as you go. Progress is saved in this browser on this device.</li>
+  </ol>
+</div>
+</div>
+
+<mod id="m1" day="1" time="60 minutes" title="Python toolkit and warm-ups">
+<p>Interviewers let you pick your language, and Python is a strong choice because the standard library does a lot of the work. The catch is that you must know what each operation costs, because "it works" is not enough. You have to say how fast it is.</p>
+
+<h3>Big-O in one minute</h3>
+<p>Big-O describes how the work grows as the input size <code>n</code> grows. You state it in every coding answer.</p>
+<table>
+<tr><th>Complexity</th><th>Name</th><th>Typical example</th></tr>
+<tr><td><code>O(1)</code></td><td>constant</td><td>dictionary lookup, list index, push on a stack</td></tr>
+<tr><td><code>O(log n)</code></td><td>logarithmic</td><td>binary search (halving the range each step)</td></tr>
+<tr><td><code>O(n)</code></td><td>linear</td><td>one loop over the input</td></tr>
+<tr><td><code>O(n log n)</code></td><td>linearithmic</td><td>good sorting algorithms</td></tr>
+<tr><td><code>O(n²)</code></td><td>quadratic</td><td>a loop inside a loop over the same input</td></tr>
+</table>
+<tip title="How to say it in an interview">
+<p>"This loops once over the array with O(1) dictionary lookups, so time is O(n). The dictionary can hold up to n items, so space is also O(n)." Always give both time and space.</p>
+</tip>
+
+<h3>What Python operations cost</h3>
+<table>
+<tr><th>Operation</th><th>list</th><th>dict or set</th><th>deque</th></tr>
+<tr><td>Add at the end</td><td>O(1)</td><td>O(1) average</td><td>O(1)</td></tr>
+<tr><td>Remove from the end</td><td>O(1)</td><td>O(1) average</td><td>O(1)</td></tr>
+<tr><td>Remove or insert at the front</td><td>O(n)</td><td>not applicable</td><td>O(1)</td></tr>
+<tr><td>Check <code>x in ...</code></td><td>O(n)</td><td>O(1) average</td><td>O(n)</td></tr>
+<tr><td>Index <code>a[i]</code></td><td>O(1)</td><td>lookup by key O(1)</td><td>O(1) at the ends, O(n) in the middle</td></tr>
+<tr><td>Sort</td><td>O(n log n)</td><td>not applicable</td><td>not applicable</td></tr>
+</table>
+
+<h3>The toolkit</h3>
+<p>Read this block slowly and type it into a Python file. The comments show what each line returns.</p>
+[[py:py_toolkit]]
+
+<try id="wordfreq" title="Two most common words" must="1">
+<p>Write <code>top_two_words(text)</code> that returns the two most common words as a list of <code>(word, count)</code> pairs, ignoring upper or lower case.</p>
+<pre class="plain">top_two_words("a b A c b a")   # [('a', 3), ('b', 2)]</pre>
+<p>Hint: split the text, then look at <code>collections.Counter</code>.</p>
+<solution>
+[[py:wordfreq]]
+<p><code>lower()</code> makes "A" and "a" count as the same word, <code>split()</code> breaks the text on whitespace, and <code>Counter(...).most_common(2)</code> returns the top two. Time is O(n) to count, plus a small sort of the distinct words. Space is O(n).</p>
+<p>Edge cases to mention: empty text (returns an empty list), and punctuation like "hello," which would count separately unless you strip it.</p>
+</try>
+
+<h3>Classic warm-ups</h3>
+<p>Campus interviews often start with easy classics to see if you can write clean code under pressure. You should be able to write these in under two minutes each.</p>
+
+<try id="warmups" title="Five classics from memory" must="1">
+<p>Write these five functions without looking anything up:</p>
+<ul>
+<li><code>reverse_string(s)</code></li>
+<li><code>is_prime(n)</code>. Be ready to explain why you can stop at the square root.</li>
+<li><code>fib(n)</code>, iterative. Then write it again with recursion and memoization.</li>
+<li><code>fizzbuzz(n)</code>, returning a list of strings</li>
+<li><code>count_vowels(s)</code></li>
+</ul>
+<solution>
+[[py:warmups]]
+<p><b>Why the square root?</b> If <code>n</code> has a factor larger than its square root, it must also have a matching factor smaller than it. So if no factor turns up by <code>√n</code>, none exists. That makes it O(√n) instead of O(n).</p>
+<p><b>Order matters in FizzBuzz.</b> Test <code>i % 15</code> first, because a multiple of 15 is also a multiple of 3 and 5.</p>
+<p>The recursive Fibonacci with memoization (caching results so each value is computed once):</p>
+[[py:fib_memo]]
+<p>Plain recursion without the cache recomputes the same values again and again, taking O(2<sup>n</sup>) time. With the cache it is O(n). The iterative version is O(n) time and O(1) space, so it is usually the best answer.</p>
+</try>
+
+<qaset id="qa-python" title="Python language questions">
+<qa q="List vs tuple?">A list is mutable (you can change it after creation) and a tuple is immutable. Tuples are slightly faster and, being immutable and hashable, can be used as dictionary keys. Use a tuple for fixed data such as coordinates.</qa>
+<qa q="Mutable vs immutable types?">Mutable objects can change in place (list, dict, set). Immutable ones cannot (int, float, str, tuple, frozenset). "Changing" an immutable value really creates a new object.</qa>
+<qa q="What is the difference between == and is?">== checks whether two values are equal. <code>is</code> checks whether two names point to the very same object in memory. Use <code>is</code> mainly for <code>None</code> checks (<code>x is None</code>).</qa>
+<qa q="Why is def f(x=[]) dangerous?">The default list is created once, when the function is defined, and shared by every call. Appending to it in one call changes what later calls see. The fix is <code>def f(x=None):</code> and then <code>if x is None: x = []</code> inside.</qa>
+<qa q="Shallow copy vs deep copy?">A shallow copy (<code>list.copy()</code>, <code>copy.copy</code>) copies the outer container but shares the inner objects. A deep copy (<code>copy.deepcopy</code>) copies everything recursively. It matters for nested lists: changing an inner list through a shallow copy changes the original too.</qa>
+<qa q="What is a generator?">A function that uses <code>yield</code> to produce values one at a time instead of building a whole list. It saves memory for big or endless sequences, because only one value exists at a time.</qa>
+<qa q="What is a decorator?">A function that takes another function and returns a wrapped version of it, adding behaviour such as logging or timing without editing the original. It is applied with the <code>@name</code> syntax above a function.</qa>
+<qa q="What is the GIL?">The Global Interpreter Lock in CPython lets only one thread run Python bytecode at a time. Threads are still useful for I/O-bound work such as network calls, but CPU-bound work needs multiprocessing to use several cores.</qa>
+</qaset>
+</mod>
+
+<mod id="m2" day="1" time="60 minutes" title="Stack and queue">
+<p>A <b>stack</b> is last in, first out (LIFO), like a pile of plates. A <b>queue</b> is first in, first out (FIFO), like a ticket counter line. Interviewers ask you to build both because it shows you understand how data structures work underneath.</p>
+<p>In Python, a plain <code>list</code> works well as a stack because <code>append()</code> and <code>pop()</code> at the end are O(1). It is a poor queue, because <code>pop(0)</code> shifts every element and costs O(n). For a queue use <code>collections.deque</code>, where <code>append()</code> and <code>popleft()</code> are both O(1).</p>
+
+<h3>Worked example: a stack</h3>
+[[py:stack]]
+<p>Three things an interviewer looks for: the underscore in <code>_items</code> shows you understand encapsulation, the empty case is handled explicitly, and every method is O(1).</p>
+
+<try id="queue" title="Build a queue from scratch" must="1">
+<p>Write a <code>Queue</code> class with <code>enqueue(x)</code>, <code>dequeue()</code>, <code>peek()</code>, <code>is_empty()</code> and <code>size()</code>. Then answer in words:</p>
+<ol>
+<li>Why <code>deque</code> and not a list?</li>
+<li>What is the time complexity of each method?</li>
+<li>How does your <code>dequeue()</code> behave on an empty queue, and why did you choose that?</li>
+</ol>
+<solution>
+[[py:queue]]
+<p><b>1. Why deque.</b> <code>list.pop(0)</code> is O(n) because every remaining element shifts left. <code>deque.popleft()</code> is O(1).</p>
+<p><b>2. Complexity.</b> All five methods are O(1).</p>
+<p><b>3. Empty queue.</b> Raising <code>IndexError</code> makes the bug visible immediately. Returning <code>None</code> is also acceptable, but then callers must remember to check, and a real <code>None</code> stored in the queue becomes ambiguous. Say which you chose and give the reason, since that is what gets scored.</p>
+</try>
+
+<try id="parens" title="Valid parentheses" must="1">
+<p>Given a string containing only <code>()[]{}</code>, return <code>True</code> if every bracket is closed by the correct type in the correct order.</p>
+<pre class="plain">is_valid("()[]{}")   # True
+is_valid("{[()]}")   # True
+is_valid("(]")       # False
+is_valid("(((")      # False</pre>
+<p>Hint: what is the last opening bracket you have seen that is still unclosed?</p>
+<solution>
+[[py:valid_parens]]
+<p><b>Idea:</b> push every opening bracket. When a closing bracket arrives, it must match the most recent unclosed opening one, which is the top of the stack.</p>
+<p><b>Walkthrough for <code>{[()]}</code>:</b> push <code>{</code>, push <code>[</code>, push <code>(</code>. Then <code>)</code> pops <code>(</code>, a match. <code>]</code> pops <code>[</code>, a match. <code>}</code> pops <code>{</code>, a match. The stack is empty, so the answer is True.</p>
+<p><b>Edge cases:</b> a closing bracket first (<code>"]"</code>, stack empty, so False), and leftover openers at the end (<code>"((("</code>, so the final <code>return not stack</code> gives False). Time O(n), space O(n).</p>
+</try>
+
+<try id="minstack" title="Min stack">
+<p>Design a stack that supports <code>push</code>, <code>pop</code>, <code>top</code> and <code>get_min</code>, where <code>get_min</code> returns the smallest element in O(1) time.</p>
+<p>Hint: what extra information can you store with each element so the minimum survives pops?</p>
+<solution>
+[[py:min_stack]]
+<p>Each entry stores the value <em>and</em> the minimum of everything at or below it. When you pop, the previous entry still knows its own minimum, so nothing needs recomputing. Every operation is O(1), and space is O(n).</p>
+</try>
+
+<try id="queue2stacks" title="Queue using two stacks">
+<p>A classic follow-up. Build a queue using only two stacks (Python lists, using only <code>append</code> and <code>pop</code> at the end).</p>
+<p>Hint: pouring one stack into another reverses the order.</p>
+<solution>
+[[py:queue_two_stacks]]
+<p>Push new items onto the <code>_in</code> stack. When you need to dequeue and <code>_out</code> is empty, pour everything from <code>_in</code> into <code>_out</code>. That reverses the order, so the oldest item is now on top. Each element moves at most once, so dequeue is <b>amortized O(1)</b>: occasionally slow, but O(1) on average over many operations.</p>
+</try>
+
+<qaset id="qa-stackqueue" title="Stack and queue questions">
+<qa q="Where are stacks used in real systems?">The function call stack (each call is pushed, and returns pop it), undo in editors, browser back button, bracket matching in compilers, and depth-first search.</qa>
+<qa q="Where are queues used in real systems?">Printer job queues, task scheduling, message queues between services, breadth-first search, and CPU scheduling such as round robin.</qa>
+<qa q="Why is list.pop(0) slow in Python?">A list is a contiguous array. Removing the first element shifts all the others one position left, which is O(n). A deque is built for cheap operations at both ends.</qa>
+<qa q="Array-based vs linked-list-based stack?">An array-based stack has good cache behaviour and simple code, but may need to resize. A linked-list stack grows one node at a time with no resizing, but uses extra memory for pointers. Both give O(1) push and pop.</qa>
+<qa q="What is a circular queue and why use it?">A fixed-size array where the front and rear indices wrap around to the start. It reuses freed space and avoids shifting elements, so both operations stay O(1) with no wasted slots.</qa>
+<qa q="What is a priority queue?">A queue where the item with the highest priority leaves first, not the oldest. It is usually built on a heap. In Python use <code>heapq</code>, where push and pop are O(log n).</qa>
+</qaset>
+</mod>
